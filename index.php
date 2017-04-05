@@ -199,25 +199,37 @@
 		<div class="content-wrapper">
 			<article class="container-fluid wiki-article">
 				<h1 class="title">
-					<a href="#" data-npjax="true"><?=$_GET[w]?></a> (r20161031판)
+					<a href="#" data-npjax="true"><?=$_GET[w]?></a> (r20170327판)
 				</h1>
 				<div class="wiki-content clearfix">
 					<div class="wiki-inner-content">
 <?php
 	}
 	
-	// MySQL 서버에 접속합니다.
-	$conn = mysqli_connect("localhost", "username", "password", "dbname") or die("Can't access DB");
-	mysqli_set_charset($conn,"utf8");
+	// MongoDB 접속
+	$options = array('connect' => true);
+	try{
+		$mongo = new MongoClient('mongodb://localhost:27017', $options);
+	}catch (MongoConnectionException $ex){
+		error_log($ex->getMessage());
+		die("Failed to connect to MongoDB");
+	}
 	
-	$w = str_replace("'", "_(NAMUMIRRORDAASH)_", $w);
 	// 문서내용을 불러옵니다.
-	$sql = "SELECT text, contribution FROM document WHERE namespace = '$namespace' AND document = '$w' LIMIT 1";
-	$res = mysqli_query($conn, $sql);
-	$arr = mysqli_fetch_array($res);
+	$collection = $mongo->nisdisk->docData;
+	// 0이면 못불러오는 문제 있음
+	if($namespace){
+		$query = array('namespace' => $namespace, 'title' => $w);
+	} else {
+		$query = array('namespace' => '0', 'title' => $w);
+	}
+	$docData = $collection->find($query);
+	foreach($docData as $arr){
+		
+	}
 	
 	// 문서 전체 개수
-	$AllPage = 842906;
+	$AllPage = 931029; // $collection->count()
 	
 	if($arr[text]!=""){
 		require_once("namumark.php");
@@ -289,13 +301,8 @@
 					}
 					$includecontent = str_replace($tp[0].":", "", implode(":", $tp));
 				}
-				$sql = "SELECT namespace, document, text FROM document WHERE namespace = '$namespace' AND document = '$includecontent' LIMIT 1";
-				$res = mysqli_query($conn, $sql);
-				$cnt = mysqli_num_rows($res);
-				if($cnt>0){
-					$xd = $namespace."_(AJAXINCLUDESUB)_".$includecontent."_(AJAXINCLUDESUB)_".$includename;
-					$arr[text] = str_replace("_(INCLUDESTART)_".$includename.")]", "_(AJAXINCLUDE)_".$xd."_(AJAXINCLUDEEND)_", $arr[text]);
-				}
+				$xd = $namespace."_(AJAXINCLUDESUB)_".$includecontent."_(AJAXINCLUDESUB)_".$includename;
+				$arr[text] = str_replace("_(INCLUDESTART)_".$includename.")]", "_(AJAXINCLUDE)_".$xd."_(AJAXINCLUDEEND)_", $arr[text]);
 			}
 			$arr[text] = str_replace('_(INCLUDESTART)_', '[include(', $arr[text]);
 		}
@@ -355,8 +362,8 @@
 		die("저장된 문서가 아닙니다.");
 	}
 	
-	if($arr[contribution]!=""){
-		$contribution = str_replace(",", "\\n", $arr[contribution]);
+	if($arr[contributors]!=""){
+		$contribution = implode("\\n", $arr[contributors]);
 	} else {
 		$contribution = "기여자 정보가 없습니다";
 	}
