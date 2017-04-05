@@ -1,0 +1,7 @@
+RewriteEngine On
+RewriteBase /
+
+RewriteRule raw/(.*) /?w=$1&raw=2 [L]
+RewriteRule search/(.*) /?search=$1 [L]
+RewriteRule go/(.*) /?go=$1 [L]
+RewriteRule w/(.*) /?w=$1 [L]

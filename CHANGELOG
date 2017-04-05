@@ -1,0 +1,98 @@
+// -> 2017-01-13 0040
+// -> 760~770
+			$postdata = array("w" => $category[0]);
+			$cURLs = "http://wiki.file.nisdisk.ga/curl.php";
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $cURLs);
+			curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER[HTTP_USER_AGENT]);
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			$namuimgurl = curl_exec($ch);
+			curl_close($ch);
+			return '<a href="'.$this->prefix.'/'.self::encodeURI($category[0]).'" title="'.htmlspecialchars($category[0]).'"><img src="'.$namuimgurl.'"'.$paramtxt.'></a>';
+			
+// -> 2017-01-13 0040
+// -> 988~988
+				.'<div id="toc" class="wiki-macro-toc">'
+				
+// -> 2017-01-13 0040
+// -> 1000~1000
+		$result  = '<div class="toc-indent">';
+		
+// -> 2017-01-13 0040
+// -> 716~716
+			$class = 'wiki-link-external';
+			
+// -> 2017-01-13 0040 ~ 2017-01-13 1920
+// -> 893~893
+					return '<span class="wiki-size-'.$size[1].'">'.$this->formatParser($size[2]).'</span>';
+					
+// -> 2017-01-13 1920
+// -> 893~893
+					return '<span class="wiki-size size-'.$size[1].'">'.$this->formatParser($size[2]).'</span>';
+					
+// -> ADD 2017-01-13 1920
+// -> 192~192
+			return "Redirection...<meta http-equiv='Refresh' content='0;url=".$this->prefix.'/'.self::encodeURI($target[1])."'>";
+			
+// -> 2017-01-14 0210
+// -> 759~774
+			/* DB ACCESS */
+			$res = mysqli_query($conn, $sql);
+			$arrimg = mysqli_fetch_array($res);
+			
+			if($arrimg[*]!=""){
+				$namuimgurl = $arrimg[*];
+			} else if($arrimg[*]!=""){
+				$namuimgurl = "//wiki.file.nisdisk.ga/".$arrimg[*];
+			} else {
+				$xd = md5($category[0].date("H:i:s"));
+				return '<script type="text/javascript"> $(document).ready(function(){ $("#ajax_file_'.$xd.'").click(function(){ $.post("http://wiki.file.nisdisk.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); }, "html"); }); }); </script><div id="ajax_file_'.$xd.'"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시</font></span></p></td></tr></tbody></table></div>';
+			}
+			return '<a href="'.$this->prefix.'/'.self::encodeURI($category[0]).'" title="'.htmlspecialchars($category[0]).'"><img src="'.$namuimgurl.'"'.$paramtxt.'></a>';
+			
+// -> 2017-01-14 0800
+// -> 876~867
+					return '<a id="rfn-'.htmlspecialchars($id).'" class="wiki-fn-content" href="#fn-'.rawurlencode($id).'" title="'.$preview.'">['.($note[1]?$note[1]:$id).']</a>';
+
+// -> 2017-01-14 0800
+// -> 950~965
+		$result = $this->wapRender?'<hr>':'<div class="wiki-macro-footnote">';
+		foreach($this->fn as $k => $fn) {
+			$result .= $this->wapRender?'<p>':'<span class="footnote-list">';
+			if($fn['count']>1) {
+				$result .= '['.$fn['id'].'] ';
+				for($i=0;$i<$fn['count'];$i++) {
+					$result .= '<span class="target" id="fn-'.htmlspecialchars($fn['id']).'-'.($i+1).'"></span><a href="#rfn-'.rawurlencode($fn['id']).'-'.($i+1).'">'.chr(ord('A') + $i).'</a> ';
+				}
+			}
+			else {
+				$result .= '<a id="fn-'.htmlspecialchars($fn['id']).'" href="#rfn-'.$fn['id'].'">['.$fn['id'].']</a> ';
+			}
+			$result .= $this->blockParser($fn['text'])
+								.($this->wapRender?'</p>':'</span>');
+		}
+		$result .= $this->wapRender?'':'</div>';
+		
+// -> 2017-01-14 0800
+// -> 254~256
+			$result .= '<div class="clearfix"></div><div class="wiki-category"><h2>분류</h2><ul>';
+			foreach($this->category as $category) {
+				$result .= '<li>'.$this->linkProcessor(':분류:'.$category.'|'.$category, '[[').'</li> ';
+				
+// -> 2017-01-14 1030
+// -> 791~791
+				return '<script type="text/javascript"> $(document).ready(function(){ enableajax_'.$xd.' = true; $("#ajax_file_'.$xd.'").click(function(){ if(enableajax_'.$xd.'){ enableajax_'.$xd.' = false; $.post("http://wiki.file.nisdisk.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); }, "html"); } }); }); </script><div id="ajax_file_'.$xd.'"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시</font></span></p></td></tr></tbody></table></div>';
+				
+// -> 2017-01-14 1130
+// -> 790~790
+				$xd = md5($category[0].date("H:i:s").rand(1,9999));
+				
+// -> 2017-01-14 1750
+// -> 791~791
+				return '<script type="text/javascript"> $(document).ready(function(){ enableajax_'.$xd.' = true; $("#ajax_file_'.$xd.'").click(function(){ if(enableajax_'.$xd.'){ enableajax_'.$xd.' = false; $.post("http://wiki.file.nisdisk.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); } }); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시</font></span></p></td></tr></tbody></table></div>';
+				
+// -> 2017-01-30 0120
+// -> 791~791
+				return '<script type="text/javascript"> $(document).ready(function(){ enableajax_'.$xd.' = true; $("#ajax_file_'.$xd.'").click(function(){ if(enableajax_'.$xd.'){ enableajax_'.$xd.' = false; $.post("http://wiki.file.nisdisk.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); } }); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시</font></span></p></td></tr></tbody></table></div>';
