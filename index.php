@@ -43,6 +43,16 @@
 		}
 	}
 	
+	if($namespace==1){
+		$tw = explode(",", $w);
+		$w = $tw[0];
+		foreach($tw as $key => $val){
+			if($key>0){
+				$twval = explode("=", $val);
+				$override[trim($twval[0])] = trim(str_replace($twval[0]."=", "", $val));
+			}
+		}
+	}
 	if($_GET[raw]==""){
 ?>
 <html>
@@ -345,6 +355,10 @@
 			$wPrint = str_replace($find, $value, $wPrint);
 		}
 		
+		foreach($override as $key => $val){
+			$wPrint = str_replace('@'.$key.'@', $val, $wPrint);
+		}
+		
 		if($_GET[raw]==""){
 			echo $wPrint;
 		} else if($_GET[raw]=="1"){
@@ -374,6 +388,7 @@
 					<p><a href="#bottom" onclick="alert('<?=$contribution?>'); return false;">이 버전까지의 기여자 내역</a> | <a href="https://namu.wiki/history/<?=$_GET[w]?>" target="_blank">전체 기여자 내역</a><br>
 					기여자 닉네임이 R:로 시작한다면, 해당 아이디는 리그베다 위키 회원임을 뜻하는 것입니다. 그 외의 경우는 나무위키 회원을 뜻합니다.</p>
 					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="//wiki.nisdisk.ga/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a> | <a href="//bug.wiki.nisdisk.ga/" target="_blank">Issue</a>
+					이 문서의 고유번호는 <a href="/DB/index.php?db=nisdisk&collection=docData&id=<?=$arr[_id]?>" target="_blank"><?=$arr[_id]?></a> 입니다. 버그 제보시 첨부해주시면 문제 파악에 큰 도움이 됩니다.</p>
 				</footer>
 			</article>
 		</div>
