@@ -223,10 +223,7 @@
 	} else {
 		$query = array('namespace' => '0', 'title' => $w);
 	}
-	$docData = $collection->find($query);
-	foreach($docData as $arr){
-		
-	}
+	$arr = $collection->findOne($query);
 	
 	// 문서 전체 개수
 	$AllPage = 931029; // $collection->count()
@@ -376,7 +373,7 @@
 					<p>이 저작물은 <a href="https://namu.wiki/" target="_blank">나무위키</a>에서 저장된 것이며, <a rel="license" target="_blank" href="//creativecommons.org/licenses/by-nc-sa/2.0/kr/">CC BY-NC-SA 2.0 KR</a> 에 따라 이용할 수 있습니다. (단, 라이선스가 명시된 일부 문서 및 삽화 제외)<br/>기여하신 문서의 저작권은 각 기여자에게 있으며, 각 기여자는 기여하신 부분의 저작권을 갖습니다.</p>
 					<p><a href="#bottom" onclick="alert('<?=$contribution?>'); return false;">이 버전까지의 기여자 내역</a> | <a href="https://namu.wiki/history/<?=$_GET[w]?>" target="_blank">전체 기여자 내역</a><br>
 					기여자 닉네임이 R:로 시작한다면, 해당 아이디는 리그베다 위키 회원임을 뜻하는 것입니다. 그 외의 경우는 나무위키 회원을 뜻합니다.</p>
-					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="//wiki.nisdisk.ga/LICENSE" target="_blank">LICENSE</a> | <a href="//wiki.nisdisk.ga/CHANGELOG" target="_blank">CHANGELOG</a>
+					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="//wiki.nisdisk.ga/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a> | <a href="//bug.wiki.nisdisk.ga/" target="_blank">Issue</a>
 				</footer>
 			</article>
 		</div>
