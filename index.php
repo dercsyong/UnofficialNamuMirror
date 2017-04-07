@@ -181,16 +181,14 @@
 						<div class="dropdown-menu user-dropdown right">
 							<div class="dropdown-item user-info">
 								<div class="user-info">
-									<div><?=$_SERVER[HTTP_CF_CONNECTING_IP]?></div>
+									<div><?=$_SERVER[REMOTE_ADDR]?></div>
 									<div>Viewer</div>
 								</div>
 							</div>
 							<div class="dropdown-divider"></div>
-							<a id="settingsLink" class="dropdown-item" href="/settings" style="display: none;" onclick="return false;">설정</a>
-							<a id="darkToggleLink" class="dropdown-item" href="?skin=dark">어두운 화면으로</a>
+							<a class="dropdown-item" target="_blank" href="//namu.wiki/contribution/ip/<?=$_SERVER[REMOTE_ADDR]?>/document">내 문서 기여 목록</a>
+							<a class="dropdown-item" target="_blank" href="//namu.wiki/contribution/ip/<?=$_SERVER[REMOTE_ADDR]?>/discuss">내 토론 기여 목록</a>
 							<div class="dropdown-divider"></div>
-							<a class="dropdown-item" target="_blank" href="//namu.wiki/contribution/ip/<?=$_SERVER[HTTP_CF_CONNECTING_IP]?>/document">내 문서 기여 목록</a>
-							<a class="dropdown-item" target="_blank" href="//namu.wiki/contribution/ip/<?=$_SERVER[HTTP_CF_CONNECTING_IP]?>/discuss">내 토론 기여 목록</a>
 						</div>
 					</li>
 				</ul>
@@ -211,16 +209,10 @@
 	}
 	
 	// MongoDB 접속
-	$options = array('connect' => true);
-	try{
-		$mongo = new MongoClient('mongodb://localhost:27017', $options);
-	}catch (MongoConnectionException $ex){
-		error_log($ex->getMessage());
-		die("Failed to connect to MongoDB");
-	}
-	
-	/* PHP 7.0, MongoDB
 	$mongo = new MongoDB\Driver\Manager('mongodb://localhost:27017');
+	
+	// 문서내용을 불러옵니다.
+	// 0이면 못불러오는 문제 있음
 	if(!$namespace){
 		$query = new MongoDB\Driver\Query(array("namespace"=>"0", "title"=>$w));
 	} else {
@@ -230,25 +222,12 @@
 	
 	$arr[_id] = $docData[0]->_id;
 	$arr[text] = $docData[0]->text;
-	$arr[contributors] = implode("\\n", $docData[0]->contributors);
-	*/
-	
-	// 문서내용을 불러옵니다.
-	$collection = $mongo->nisdisk->docData;
-	// 0이면 못불러오는 문제 있음
-	if($namespace){
-		$query = array('namespace' => $namespace, 'title' => $w);
-	} else {
-		$query = array('namespace' => '0', 'title' => $w);
-	}
-	$arr = $collection->findOne($query);
+	$contribution = implode("\\n", $docData[0]->contributors);
 	
 	// 문서 전체 개수
 	$AllPage = 931029; // $collection->count()
 	
-	if($arr[contributors]!=""){
-		$contribution = implode("\\n", $arr[contributors]);
-	} else {
+	if($contribution==""){
 		$contribution = "기여자 정보가 없습니다";
 	}
 	
@@ -258,7 +237,7 @@
 				<div class="wiki-article-menu">
 					<div class="btn-group" role="group">
 						<a class="btn btn-secondary" href="#bottom" onclick="alert('<?=$contribution?>'); return false;" role="button">기여자 내역</a>
-						<a class="btn btn-secondary" href="/DB/index.php?db=nisdisk&collection=docData&id=<?=$arr[_id]?>" target="_blank" role="button">DB 정보</a>
+						<a class="btn btn-secondary" href="//nisdisk.ga/index.php?db=nisdisk&collection=docData&id=<?=$arr[_id]?>" target="_blank" role="button">DB 정보</a>
 						<a class="btn btn-secondary" href="//bug.wiki.nisdisk.ga/" target="_blank" role="button">버그 신고</a>
 					</div>
 				</div>
@@ -403,12 +382,6 @@
 			die("");
 		}
 		die("저장된 문서가 아닙니다.");
-	}
-	
-	if($arr[contributors]!=""){
-		$contribution = implode("\\n", $arr[contributors]);
-	} else {
-		$contribution = "기여자 정보가 없습니다";
 	}
 ?>
 					</div>
