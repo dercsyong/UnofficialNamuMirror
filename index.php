@@ -207,12 +207,6 @@
 			</nav>
 		</div>
 		<div class="content-wrapper">
-			<article class="container-fluid wiki-article">
-				<h1 class="title">
-					<a href="#" data-npjax="true"><?=$_GET[w]?></a> (r20170327판)
-				</h1>
-				<div class="wiki-content clearfix">
-					<div class="wiki-inner-content">
 <?php
 	}
 	
@@ -224,6 +218,20 @@
 		error_log($ex->getMessage());
 		die("Failed to connect to MongoDB");
 	}
+	
+	/* PHP 7.0, MongoDB
+	$mongo = new MongoDB\Driver\Manager('mongodb://localhost:27017');
+	if(!$namespace){
+		$query = new MongoDB\Driver\Query(array("namespace"=>"0", "title"=>$w));
+	} else {
+		$query = new MongoDB\Driver\Query(array("namespace"=>$namespace, "title"=>$w));
+	}
+	$docData = $mongo->executeQuery('nisdisk.docData', $query)->toArray();
+	
+	$arr[_id] = $docData[0]->_id;
+	$arr[text] = $docData[0]->text;
+	$arr[contributors] = implode("\\n", $docData[0]->contributors);
+	*/
 	
 	// 문서내용을 불러옵니다.
 	$collection = $mongo->nisdisk->docData;
@@ -237,6 +245,30 @@
 	
 	// 문서 전체 개수
 	$AllPage = 931029; // $collection->count()
+	
+	if($arr[contributors]!=""){
+		$contribution = implode("\\n", $arr[contributors]);
+	} else {
+		$contribution = "기여자 정보가 없습니다";
+	}
+	
+	if(!$_GET[raw]){
+?>
+			<article class="container-fluid wiki-article">
+				<div class="wiki-article-menu">
+					<div class="btn-group" role="group">
+						<a class="btn btn-secondary" href="#bottom" onclick="alert('<?=$contribution?>'); return false;" role="button">기여자 내역</a>
+						<a class="btn btn-secondary" href="/DB/index.php?db=nisdisk&collection=docData&id=<?=$arr[_id]?>" target="_blank" role="button">DB 정보</a>
+						<a class="btn btn-secondary" href="//bug.wiki.nisdisk.ga/" target="_blank" role="button">버그 신고</a>
+					</div>
+				</div>
+				<h1 class="title">
+					<a href="#" data-npjax="true"><?=$_GET[w]?></a> (r20170327판)
+				</h1>
+				<div class="wiki-content clearfix">
+					<div class="wiki-inner-content">
+<?php
+	}
 	
 	if($arr[text]!=""){
 		require_once("namumark.php");
@@ -385,10 +417,7 @@
 				<footer>
 					<p><img alt="크리에이티브 커먼즈 라이선스" style="border-width: 0;" src="/namuwiki/cc-by-nc-sa-2.0-88x31.png"></p>
 					<p>이 저작물은 <a href="https://namu.wiki/" target="_blank">나무위키</a>에서 저장된 것이며, <a rel="license" target="_blank" href="//creativecommons.org/licenses/by-nc-sa/2.0/kr/">CC BY-NC-SA 2.0 KR</a> 에 따라 이용할 수 있습니다. (단, 라이선스가 명시된 일부 문서 및 삽화 제외)<br/>기여하신 문서의 저작권은 각 기여자에게 있으며, 각 기여자는 기여하신 부분의 저작권을 갖습니다.</p>
-					<p><a href="#bottom" onclick="alert('<?=$contribution?>'); return false;">이 버전까지의 기여자 내역</a> | <a href="https://namu.wiki/history/<?=$_GET[w]?>" target="_blank">전체 기여자 내역</a><br>
-					기여자 닉네임이 R:로 시작한다면, 해당 아이디는 리그베다 위키 회원임을 뜻하는 것입니다. 그 외의 경우는 나무위키 회원을 뜻합니다.</p>
-					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="//wiki.nisdisk.ga/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a> | <a href="//bug.wiki.nisdisk.ga/" target="_blank">Issue</a>
-					이 문서의 고유번호는 <a href="/DB/index.php?db=nisdisk&collection=docData&id=<?=$arr[_id]?>" target="_blank"><?=$arr[_id]?></a> 입니다. 버그 제보시 첨부해주시면 문제 파악에 큰 도움이 됩니다.</p>
+					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="//wiki.nisdisk.ga/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p>
 				</footer>
 			</article>
 		</div>
