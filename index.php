@@ -1,4 +1,18 @@
 <?php
+	if($_GET[complete]!=""){
+		$cURLs = "https://namu.wiki/complete/".urlencode($_GET[complete]);
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $cURLs);
+		curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER[HTTP_USER_AGENT]);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_REFERER, "https://namu.wiki/w/나무위키:대문");
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_VERBOSE, 0);
+		$cURLs = curl_exec($ch);
+		curl_close($ch);
+		die($cURLs);
+	}
 	if($_GET[search]!=""){
 		header("Location: /w/".$_GET[search]);
 		die();
