@@ -18,9 +18,6 @@
  * 
  */
 
-$conn = mysqli_connect("localhost", "username", "password", "dbname") or die("Can't access DB");
-mysqli_set_charset($conn,"utf8");
-
 class PlainWikiPage {
 	public $title, $text, $lastchanged;
 	function __construct($text) {
@@ -778,19 +775,8 @@ class NamuMark {
 			}
 			$paramtxt .= ($csstxt!=''?' style="'.$csstxt.'"':'');
 			
-			$sql = "SELECT dir, google FROM file WHERE name = '$category[0]' LIMIT 1";
-			$res = mysqli_query($conn, $sql);
-			$arrimg = mysqli_fetch_array($res);
-			
-			if($arrimg[google]!=""){
-				$namuimgurl = $arrimg[google];
-			} else if($arrimg[dir]!=""){
-				$namuimgurl = "//wiki.file.nisdisk.ga/".$arrimg[dir];
-			} else {
-				$xd = md5($category[0].rand(1,50));
-				return '<script type="text/javascript"> $(document).ready(function(){ enableajax_'.$xd.' = true; $("#ajax_file_'.$xd.'").click(function(){ if(enableajax_'.$xd.'){ enableajax_'.$xd.' = false; $.post("http://wiki.file.nisdisk.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); } }); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시</font></span></p></td></tr></tbody></table></div>';
-			}
-			return '<a href="'.$this->prefix.'/'.self::encodeURI($category[0]).'" title="'.htmlspecialchars($category[0]).'"><img src="'.$namuimgurl.'"'.$paramtxt.'></a>';
+			$xd = md5($category[0].rand(1,50));
+			return '<script type="text/javascript"> $(document).ready(function(){ enableajax_'.$xd.' = true; $("#ajax_file_'.$xd.'").click(function(){ if(enableajax_'.$xd.'){ enableajax_'.$xd.' = false; $.post("http://wiki.nisdisk.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); } }); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시</font></span></p></td></tr></tbody></table></div>';
 		}
 		else {
 			if(self::startsWith($href[0], ':')) {
