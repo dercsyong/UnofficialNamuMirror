@@ -6,3 +6,7 @@ RewriteRule search/(.*) /?search=$1 [L]
 RewriteRule go/(.*) /?go=$1 [L]
 RewriteRule w/(.*) /?w=$1 [L]
 RewriteRule complete/(.*) /?complete=$1 [L]
+
+RewriteRule settingscreate /?settings=1&create=1 [L]
+RewriteRule settingsapply /?settings=1&apply=1 [L]
+RewriteRule settings /?settings=1 [L]
