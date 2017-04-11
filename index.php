@@ -13,6 +13,54 @@
 		curl_close($ch);
 		die($cURLs);
 	}
+	// Settings
+	$conn = mysqli_connect("localhost", "username", "password", "dbname") or die("Can't access DB");
+	mysqli_set_charset($conn,"utf8");
+	$sql = "SELECT * FROM settings WHERE ip = '$_SERVER[REMOTE_ADDR]'";
+	$res = mysqli_query($conn, $sql);
+	$cnt = mysqli_num_rows($res);
+	if($cnt){
+		$settings = mysqli_fetch_array($res);
+	} else {
+		$sql = "SELECT * FROM settings WHERE ip = '0.0.0.0'";
+		$res = mysqli_query($conn, $sql);
+	}
+	if($_GET[settings]!=""){
+		$_GET[w] = "!MyPage";
+		if($_GET[create]!=""){
+			$sql = "SELECT * FROM settings WHERE ip = '$_SERVER[REMOTE_ADDR]'";
+			$res = mysqli_query($conn, $sql);
+			$cnt = mysqli_num_rows($res);
+			if(!$cnt){
+				$sql = "INSERT INTO settings(`ip`, `docVersion`) VALUES ";
+				$sql .= "('".$_SERVER[REMOTE_ADDR]."', '170327')";
+				mysqli_query($conn, $sql);
+			}
+			
+			die(header("Location: settings"));
+		}
+		if($_GET[apply]!=""){
+			switch($_POST[Ads]){
+				case "on":
+					$enableAds = 1;
+					break;
+				default:
+					$enableAds = 0;
+			}
+			switch($_POST[Notice]){
+				case "on":
+					$enableNotice = 1;
+					break;
+				default:
+					$enableNotice = 0;
+			}
+			
+			$sql = "UPDATE settings SET enableAds = '$enableAds', enableNotice = '$enableNotice' WHERE ip = '$_SERVER[REMOTE_ADDR]'";
+			mysqli_query($conn, $sql);
+			
+			die(header("Location: settings"));
+		}
+	}
 	if($_GET[search]!=""){
 		header("Location: /w/".$_GET[search]);
 		die();
@@ -71,7 +119,7 @@
 ?>
 <html>
 	<meta charset="utf-8"/>
-	<title>Unofficial NIS</title>
+	<title><?=$_GET[w]?> :: NamuReader</title>
 	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width"/>
 	<meta http-equiv="x-ua-compatible" content="ie=edge"/>
 	<link rel="stylesheet" href="/namuwiki/css/jquery-ui.min.css"/>
@@ -178,7 +226,7 @@
 								<span class="icon ion-image"></span>
 								<span class="icon-title">외부 이미지 참조 검색</span>
 							</a>
-							<a class="dropdown-item" target="_blank" href=" /License">
+							<a class="dropdown-item" target="_blank" href=" /LICENSE">
 								<span class="icon ion-pricetag"></span>
 								<span class="icon-title">라이선스</span>
 							</a>
@@ -245,23 +293,115 @@
 		$contribution = "기여자 정보가 없습니다";
 	}
 	
-	if(!$_GET[raw]){
-?>
+	if(!$_GET[raw]){ ?>
 			<article class="container-fluid wiki-article">
+<?php		if($settings[enableNotice]){ ?>
+				<div class="alert alert-info fade in last" id="userDiscussAlert" role="alert">
+					<a href="/settings">개인 설정</a>에서 광고를 제거하실 수 있습니다.
+				</div>
+<?php		}
+			if($w!="!MyPage"){ ?>
 				<div class="wiki-article-menu">
 					<div class="btn-group" role="group">
 						<a class="btn btn-secondary" href="#bottom" onclick="alert('<?=$contribution?>'); return false;" role="button">기여자 내역</a>
 						<a class="btn btn-secondary" href="//nisdisk.ga/index.php?db=nisdisk&collection=docData&id=<?=$arr[_id]?>" target="_blank" role="button">DB 정보</a>
 						<a class="btn btn-secondary" href="//bug.wiki.nisdisk.ga/" target="_blank" role="button">버그 신고</a>
+						<a class="btn btn-secondary" href="/settings" role="button">개인설정</a>
 					</div>
 				</div>
+<?php		} else { ?>
+				<div class="wiki-article-menu">
+					<div class="btn-group" role="group">
+						<a class="btn btn-secondary" href="/w/!ADReport" role="button">광고 수익금 보고서</a>
+					</div>
+				</div>
+<?php		} ?>
 				<h1 class="title">
-					<a href="#" data-npjax="true"><?=$_GET[w]?></a> (r20170327판)
+					<a href="#" data-npjax="true"><?=$_GET[w]?></a> (r20<?=$settings[docVersion]?>판)
 				</h1>
 				<div class="wiki-content clearfix">
 					<div class="wiki-inner-content">
 <?php
-	}
+			if($w=="!MyPage"){ ?>
+				<h2 class="title">
+					<?=$_SERVER[REMOTE_ADDR]?> 개인설정
+				</h2>
+<?php			if($settings[ip]=="0.0.0.0"){ ?>
+					<h4>
+						<a href="/settingscreate">설정파일 생성</a>이 필요합니다.
+					</h4>
+<?php			} else { ?>
+					<form action="settingsapply" method="post">
+						<section class="tab-content settings-section">
+							<div role="tabpanel" class="tab-pane fade in active" id="siteLayout">
+								<div class="form-group" id="documentVersion">
+									<label class="control-label">덤프 버전</label>
+									<select class="form-control setting-item">
+										<option value="170327">20170327</option>
+									</select>
+								</div>
+								
+								<div class="form-group" id="documentAutoLoad">
+									<label class="control-label">자동으로 include 문서 읽기</label>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" name="docAL" <?php if($settings[docAutoLoad]){ echo "checked"; }?> disabled> 사용
+										</label>
+									</div>
+								</div>
+								
+								<div class="form-group" id="imagesAutoLoad">
+									<label class="control-label">자동으로 이미지 읽기</label>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" name="imgAL" <?php if($settings[imgAutoLoad]){ echo "checked"; }?> disabled> 사용
+										</label>
+									</div>
+								</div>
+								
+								<div class="form-group" id="Ads">
+									<label class="control-label">광고 보이기</label>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" name="Ads" <?php if($settings[enableAds]){ echo "checked"; }?>> 사용
+										</label>
+									</div>
+								</div>
+								
+								<div class="form-group" id="Notice">
+									<label class="control-label">공지사항 보이기</label>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" name="Notice" <?php if($settings[enableNotice]){ echo "checked"; }?>> 사용
+										</label>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									&nbsp;	<button type="submit" class="btn btn-primary">적용</button>
+								</div>
+							</div>
+						</section>
+					</form>
+<?php			} ?>
+					</div>
+				</div>
+			
+				<footer>
+					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="//wiki.nisdisk.ga/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p>
+<?php
+	if($settings[enableAds]){ ?>
+					<p>
+						<!-- AD -->
+					</p>
+<?php	} ?>
+				</footer>
+			</article>
+		</div>
+	</body>
+</html>
+<?php	die(); }
+	} 
 	
 	if($arr[text]!=""){
 		require_once("namumark.php");
@@ -405,6 +545,12 @@
 					<p><img alt="크리에이티브 커먼즈 라이선스" style="border-width: 0;" src="/namuwiki/cc-by-nc-sa-2.0-88x31.png"></p>
 					<p>이 저작물은 <a href="https://namu.wiki/" target="_blank">나무위키</a>에서 저장된 것이며, <a rel="license" target="_blank" href="//creativecommons.org/licenses/by-nc-sa/2.0/kr/">CC BY-NC-SA 2.0 KR</a> 에 따라 이용할 수 있습니다. (단, 라이선스가 명시된 일부 문서 및 삽화 제외)<br/>기여하신 문서의 저작권은 각 기여자에게 있으며, 각 기여자는 기여하신 부분의 저작권을 갖습니다.</p>
 					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="//wiki.nisdisk.ga/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p>
+<?php
+	if($settings[enableAds]){ ?>
+					<p>
+						<!-- AD -->
+					</p>
+<?php	} ?>
 				</footer>
 			</article>
 		</div>
