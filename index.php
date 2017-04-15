@@ -1,4 +1,7 @@
 <?php
+	if($_GET[w]=="!MyPage"){
+		die(header("Location: /settings"));
+	}
 	if($_GET[complete]!=""){
 		$cURLs = "https://namu.wiki/complete/".urlencode($_GET[complete]);
 		$ch = curl_init();
@@ -24,7 +27,11 @@
 	} else {
 		$sql = "SELECT * FROM settings WHERE ip = '0.0.0.0'";
 		$res = mysqli_query($conn, $sql);
+		$settings = mysqli_fetch_array($res);
 	}
+	$sqlref = "SELECT * FROM settings WHERE ip = '0.0.0.0'";
+	$resref = mysqli_query($conn, $sqlref);
+	$settingsref = mysqli_fetch_array($resref);
 	if($_GET[settings]!=""){
 		$_GET[w] = "!MyPage";
 		if($_GET[create]!=""){
@@ -54,12 +61,39 @@
 				default:
 					$enableNotice = 0;
 			}
+			switch($_POST[docAL]){
+				case "on":
+					$docAutoLoad = 1;
+					break;
+				default:
+					$docAutoLoad = 0;
+			}
+			switch($_POST[imgAL]){
+				case "on":
+					$imgAutoLoad = 1;
+					break;
+				default:
+					$imgAutoLoad = 0;
+			}
+			switch($_POST[docVersion]){
+				case "161031":
+					$docVersion = 161031;
+					break;
+				case "160829":
+					$docVersion = 160829;
+					break;
+				default:
+					$docVersion = 170327;
+			}
 			
-			$sql = "UPDATE settings SET enableAds = '$enableAds', enableNotice = '$enableNotice' WHERE ip = '$_SERVER[REMOTE_ADDR]'";
+			$sql = "UPDATE settings SET docVersion = '$docVersion', docAutoLoad = '$docAutoLoad', imgAutoLoad = '$imgAutoLoad', enableAds = '$enableAds', enableNotice = '$enableNotice' WHERE ip = '$_SERVER[REMOTE_ADDR]'";
 			mysqli_query($conn, $sql);
 			
 			die(header("Location: settings"));
 		}
+	}
+	if($_GET[w]=="!ADReport"){
+		$settings[docVersion] = $settingsref[docVersion];
 	}
 	if($_GET[search]!=""){
 		header("Location: /w/".$_GET[search]);
@@ -304,7 +338,7 @@
 				<div class="wiki-article-menu">
 					<div class="btn-group" role="group">
 						<a class="btn btn-secondary" href="#bottom" onclick="alert('<?=$contribution?>'); return false;" role="button">기여자 내역</a>
-						<a class="btn btn-secondary" href="//nisdisk.ga/index.php?db=nisdisk&collection=docData&id=<?=$arr[_id]?>" target="_blank" role="button">DB 정보</a>
+						<a class="btn btn-secondary" href="//nisdisk.ga/index.php?db=nisdisk&collection=docData<?=$settings[docVersion]?>&id=<?=$arr[_id]?>" target="_blank" role="button">DB 정보</a>
 						<a class="btn btn-secondary" href="//bug.wiki.nisdisk.ga/" target="_blank" role="button">버그 신고</a>
 						<a class="btn btn-secondary" href="/settings" role="button">개인설정</a>
 					</div>
@@ -338,6 +372,8 @@
 									<label class="control-label">덤프 버전</label>
 									<select class="form-control setting-item">
 										<option value="170327">20170327</option>
+										<option value="161031" <?php if($settings[docVersion]=="161031"){ echo "selected"; } ?>>20161031</option>
+										<option value="160829" <?php if($settings[docVersion]=="160829"){ echo "selected"; } ?>>20160829</option>
 									</select>
 								</div>
 								
@@ -345,7 +381,7 @@
 									<label class="control-label">자동으로 include 문서 읽기</label>
 									<div class="checkbox">
 										<label>
-											<input type="checkbox" name="docAL" <?php if($settings[docAutoLoad]){ echo "checked"; }?> disabled> 사용
+											<input type="checkbox" name="docAL" <?php if($settings[docAutoLoad]){ echo "checked"; }?>> 사용
 										</label>
 									</div>
 								</div>
@@ -354,7 +390,7 @@
 									<label class="control-label">자동으로 이미지 읽기</label>
 									<div class="checkbox">
 										<label>
-											<input type="checkbox" name="imgAL" <?php if($settings[imgAutoLoad]){ echo "checked"; }?> disabled> 사용
+											<input type="checkbox" name="imgAL" <?php if($settings[imgAutoLoad]){ echo "checked"; }?>> 사용
 										</label>
 									</div>
 								</div>
@@ -510,8 +546,13 @@
 			$fulldocument = $xc[2];
 			$xd = md5($namespace.$document);
 			
-			$echo = '<script type="text/javascript"> $(document).ready(function(){ enableincludeajax_'.$xd.' = true; $("#ajax_include_'.$xd.'").click(function(){ if(enableincludeajax_'.$xd.'){ enableincludeajax_'.$xd.' = false; $.get("/?w='.$fulldocument.'&raw=1", function(data){ $("#ajax_include_'.$xd.'").html(data); }); } }); }); </script>';
-			$echo .= '<div id="ajax_include_'.$xd.'"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">[include('.$fulldocument.')] 문서 읽기</font></span></p></td></tr></tbody></table></div>';
+			if($settings[docAutoLoad]){
+				$echo = '<script type="text/javascript"> $(document).ready(function(){ $.get("/?w='.$fulldocument.'&raw=1", function(data){ $("#ajax_include_'.$xd.'").html(data); }); }); </script>';
+				$echo .= '<div id="ajax_include_'.$xd.'"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">[include('.$fulldocument.')] 문서 읽는중</font></span></p></td></tr></tbody></table></div>';
+			} else {
+				$echo = '<script type="text/javascript"> $(document).ready(function(){ enableincludeajax_'.$xd.' = true; $("#ajax_include_'.$xd.'").click(function(){ if(enableincludeajax_'.$xd.'){ enableincludeajax_'.$xd.' = false; $.get("/?w='.$fulldocument.'&raw=1", function(data){ $("#ajax_include_'.$xd.'").html(data); }); } }); }); </script>';
+				$echo .= '<div id="ajax_include_'.$xd.'"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">[include('.$fulldocument.')] 문서 읽기</font></span></p></td></tr></tbody></table></div>';
+			}
 			$wPrint = str_replace("_(AJAXINCLUDE)_".$namespace."_(AJAXINCLUDESUB)_".$document."_(AJAXINCLUDESUB)_".$fulldocument."_(AJAXINCLUDEEND)_", $echo, $wPrint);
 		}
 		
