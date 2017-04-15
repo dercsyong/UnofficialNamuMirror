@@ -863,7 +863,7 @@ class NamuMark {
 					$preview = $notetext;
 					$preview = strip_tags($preview);
 					$preview = str_replace('"', '\\"', $preview);
-					return '<a id="rfn-'.htmlspecialchars($id).'" class="wiki-fn-content" href="#fn-'.rawurlencode($id).'" title="'.$preview.'">['.($note[1]?$note[1]:$id).']</a>';
+					return '<script type="text/javascript"> $(document).ready(function(){ $("#rfn-'.htmlspecialchars($id).'").hover(function(){ valrfn_'.htmlspecialchars($id).' = false; $("#Modalrfn-'.htmlspecialchars($id).'").attr("style", "display: block;"); }); $("#Modalrfn-'.htmlspecialchars($id).'").on("click", function(){ if(valrfn_'.htmlspecialchars($id).'==false){ $("#Modalrfn-'.htmlspecialchars($id).'").attr("style", "display: none;"); } }); $("#rfn-'.htmlspecialchars($id).'").bind("touchstart", function(){ valrfn_'.htmlspecialchars($id).' = true; $("#Modalrfn-'.htmlspecialchars($id).'").attr("style", "display: block;"); }); $("#Modalrfn-'.htmlspecialchars($id).'").bind("touchstart", function(){ valrfn_'.htmlspecialchars($id).' = false; $("#Modalrfn-'.htmlspecialchars($id).'").attr("style", "display: none;"); }); }); </script><a id="rfn-'.htmlspecialchars($id).'" class="wiki-fn-content" href="#fn-'.rawurlencode($id).'" title="'.$preview.'">['.($note[1]?$note[1]:$id).']</a><div class="modal in" id="Modalrfn-'.htmlspecialchars($id).'" style="display: none;"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-body"> '.$preview.'</div></div></div></div>';
 				}
 		}
 		return '['.$text.']';
