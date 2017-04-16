@@ -282,9 +282,10 @@
 								</div>
 							</div>
 							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" target="_self" href="/settings">설정</a>
+							<div class="dropdown-divider"></div>
 							<a class="dropdown-item" target="_blank" href="//namu.wiki/contribution/ip/<?=$_SERVER[REMOTE_ADDR]?>/document">내 문서 기여 목록</a>
 							<a class="dropdown-item" target="_blank" href="//namu.wiki/contribution/ip/<?=$_SERVER[REMOTE_ADDR]?>/discuss">내 토론 기여 목록</a>
-							<div class="dropdown-divider"></div>
 						</div>
 					</li>
 				</ul>
@@ -331,7 +332,7 @@
 			<article class="container-fluid wiki-article">
 <?php		if($settings[enableNotice]){ ?>
 				<div class="alert alert-info fade in last" id="userDiscussAlert" role="alert">
-					<a href="/settings">개인 설정</a>에서 광고를 제거하실 수 있습니다.
+					<a href="/settings">설정</a>에서 광고 제거 등, 새로운 기능을 확인해보실 수 있습니다.
 				</div>
 <?php		}
 			if($w!="!MyPage"){ ?>
@@ -340,7 +341,6 @@
 						<a class="btn btn-secondary" href="#bottom" onclick="alert('<?=$contribution?>'); return false;" role="button">기여자 내역</a>
 						<a class="btn btn-secondary" href="//nisdisk.ga/index.php?db=nisdisk&collection=docData<?=$settings[docVersion]?>&id=<?=$arr[_id]?>" target="_blank" role="button">DB 정보</a>
 						<a class="btn btn-secondary" href="//bug.wiki.nisdisk.ga/" target="_blank" role="button">버그 신고</a>
-						<a class="btn btn-secondary" href="/settings" role="button">개인설정</a>
 					</div>
 				</div>
 <?php		} else { ?>
@@ -358,7 +358,7 @@
 <?php
 			if($w=="!MyPage"){ ?>
 				<h2 class="title">
-					<?=$_SERVER[REMOTE_ADDR]?> 개인설정
+					<?=$_SERVER[REMOTE_ADDR]?> 개인 설정
 				</h2>
 <?php			if($settings[ip]=="0.0.0.0"){ ?>
 					<h4>
@@ -390,7 +390,7 @@
 									<label class="control-label">자동으로 이미지 읽기</label>
 									<div class="checkbox">
 										<label>
-											<input type="checkbox" name="imgAL" <?php if($settings[imgAutoLoad]){ echo "checked"; }?>> 사용
+											<input type="checkbox" name="imgAL" id="needads" onclick="if(!document.settings.ads.checked){ alert('광고 보이기 기능을 사용해야 이용 가능한 기능입니다'); document.settings.needads.checked = true; document.settings.ads.checked = true; }" <?php if($settings[imgAutoLoad]){ echo "checked"; }?>> 사용
 										</label>
 									</div>
 								</div>
@@ -399,7 +399,7 @@
 									<label class="control-label">광고 보이기</label>
 									<div class="checkbox">
 										<label>
-											<input type="checkbox" name="Ads" <?php if($settings[enableAds]){ echo "checked"; }?>> 사용
+											<input type="checkbox" name="Ads" id="ads" onclick="if(document.settings.needads.checked){ alert('자동으로 이미지 읽기 기능을 사용해제 해야 합니다.'); document.settings.needads.checked = false; document.settings.ads.checked = false; }" <?php if($settings[enableAds]){ echo "checked"; }?>> 사용
 										</label>
 									</div>
 								</div>
@@ -414,7 +414,7 @@
 								</div>
 								
 								<div class="form-group">
-									&nbsp;	<button type="submit" class="btn btn-primary">적용</button>
+									&nbsp;	<button type="submit" class="btn btn-primary" onclick="if(!document.settings.ads.checked&&document.settings.needads.checked){ alert('설정이 잘못되었습니다'); return false; }">적용</button>
 								</div>
 							</div>
 						</section>
