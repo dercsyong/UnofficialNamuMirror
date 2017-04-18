@@ -445,6 +445,9 @@
 			$arr[text] = "[[".$_GET[w]."]]".$arr[text];
 		}
 		
+		// 하위문서 링크
+		$arr[text] = str_replace("[[/", "[[".$w."/", $arr[text]);
+		
 		// ver무식 namumark 적용안되는 것들 처리
 		// #!wiki style 문법 우회 적용
 		$arr[text] = str_replace("}}}", "_(HTMLE)_", $arr[text]);
@@ -453,10 +456,35 @@
 			$style = reset(explode('"', $htmlstart[$x]));
 			$arr[text] = str_replace('{{{#!wiki style="'.$style.'"', '{{{#!html <div style="'.$style.'">}}}', $arr[text]);
 			
-			$exist[$x] = count(explode("{{{", reset(explode("_(HTMLE)_", next(explode('{{{#!html <div style="'.$style.'">}}}', $arr[text]))))))-1;
-			$total = array_sum($exist);
-			$explode = explode("_(HTMLE)_", $arr[text]);
-			$arr[text] = str_replace($explode[$total]."_(HTMLE)_", $explode[$total]."{{{#!html </div>}}}", $arr[text]);
+			$loop = explode("_(HTMLE)_", next(explode('{{{#!html <div style="'.$style.'">}}}', $arr[text])));
+			$check = true;
+			$z = 0;
+			while($check){
+				if(count(explode("{{{", $loop[$z]))>1){
+					$z = $z + count(explode("{{{", $loop[$z])) - 1;
+				} else {
+					$arr[text] = str_replace($loop[$z-1]."_(HTMLE)_".$loop[$z]."_(HTMLE)_", $loop[$z-1]."_(HTMLE)_".$loop[$z]."{{{#!html </div>}}}", $arr[text]);
+					$check = false;
+				}
+				if($z>count($loop)){
+					$check = false;
+				}
+			}
+		}
+		$arr[text] = str_replace("</div>}}}_(HTMLE)_", "</div>}}}{{{#!html </div>}}}", $arr[text]);
+		
+		// 개선 필요한 문서
+		if($namespace==1&&$w=="토론 합의"){
+			$arr[text] = str_replace("}}}\n_(HTMLE)_", "}}}\n{{{#!html </div>}}}", $arr[text]);
+		}
+		if($namespace==1&&$w=="토론 합의(문단)"){
+			$arr[text] = str_replace("}}}\n_(HTMLE)_", "}}}\n{{{#!html </div>}}}", $arr[text]);
+		}
+		if($namespace==1&&$w=="회원수정"){
+			$arr[text] = str_replace("_(HTMLE)_{{{#!html", "{{{#!html </div>}}}{{{#!html", $arr[text]);
+		}
+		if($namespace==1&&$w=="관리자 수정"){
+			$arr[text] = str_replace("_(HTMLE)_{{{#!html", "{{{#!html </div>}}}{{{#!html", $arr[text]);
 		}
 		
 		// [[XXX|[[XXX]]]] 문법 우회 적용
@@ -526,6 +554,7 @@
 		// [datetime] [PageCount] 지원
 		$arr[text] = str_replace("[datetime]", date("Y-m-d H:i:s"), $arr[text]);
 		$arr[text] = str_replace("[PageCount]", $AllPage, $arr[text]);
+		$arr[text] = str_replace("[pagecount]", $AllPage, $arr[text]);
 		
 		// MySQLWikiPage와는 달리 PlainWikiPage의 첫 번째 인수로 위키텍스트를 받습니다.
 		$wPage = new PlainWikiPage($arr[text]);
