@@ -82,6 +82,24 @@
 				case "160829":
 					$docVersion = 160829;
 					break;
+				case "160728":
+					$docVersion = 160728;
+					break;
+				case "160627":
+					$docVersion = 160627;
+					break;
+				case "160530":
+					$docVersion = 160530;
+					break;
+				case "160425":
+					$docVersion = 160425;
+					break;
+				case "160329":
+					$docVersion = 160329;
+					break;
+				case "160229":
+					$docVersion = 160229;
+					break;
 				default:
 					$docVersion = 170327;
 			}
@@ -306,7 +324,17 @@
 	}
 	
 	// MongoDB 접속
-	$mongo = new MongoDB\Driver\Manager('mongodb://localhost:27017');
+	if($settings[docVersion]>=160829){
+		$mongoServer = "localhost";
+	} else {
+		$mongoServer = "mirror";
+	}
+	try{
+		$mongo = new MongoDB\Driver\Manager('mongodb://'.$mongoServer.':27017');
+	} catch (MongoDB\Driver\Exception\Exception $e) {
+		$settings[docVersion] = "170327";
+		$mongo = new MongoDB\Driver\Manager('mongodb://localhost:27017');
+	}
 	
 	// 문서내용을 불러옵니다.
 	// 0이면 못불러오는 문제 있음
@@ -374,6 +402,12 @@
 										<option value="170327">20170327</option>
 										<option value="161031" <?php if($settings[docVersion]=="161031"){ echo "selected"; } ?>>20161031</option>
 										<option value="160829" <?php if($settings[docVersion]=="160829"){ echo "selected"; } ?>>20160829</option>
+										<option value="160728" <?php if($settings[docVersion]=="160728"){ echo "selected"; } ?>>20160728</option>
+										<option value="160627" <?php if($settings[docVersion]=="160627"){ echo "selected"; } ?>>20160627</option>
+										<option value="160530" <?php if($settings[docVersion]=="160530"){ echo "selected"; } ?>>20160530</option>
+										<option value="160425" <?php if($settings[docVersion]=="160425"){ echo "selected"; } ?>>20160425</option>
+										<option value="160329" <?php if($settings[docVersion]=="160329"){ echo "selected"; } ?>>20160329</option>
+										<option value="160229" <?php if($settings[docVersion]=="160229"){ echo "selected"; } ?>>20160229</option>
 									</select>
 								</div>
 								
