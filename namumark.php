@@ -142,12 +142,7 @@ class NamuMark {
 				'open'	=> '{{{',
 				'close' => '}}}',
 				'multiline' => true,
-				'processor' => array($this,'renderProcessor'))//,
-	/*		array(
-				'open'	=> '{{{#!wiki',
-				'close' => '}}}',
-				'multiline' => true,
-				'processor' => array($this,'render2Processor')) */
+				'processor' => array($this,'renderProcessor'))
 			);
 			
 		$this->macro_processors = array();
@@ -281,7 +276,7 @@ class NamuMark {
 			return false;
 
 		$offset = $i-1;
-		return '<blockquote>'.$innerhtml.'</blockquote>';
+		return '<blockquote class="wiki-quote">'.$innerhtml.'</blockquote>';
 	}
 
 	private function tableParser($text, &$offset) {
@@ -710,20 +705,6 @@ class NamuMark {
 		return '<pre><code>'.substr($text, 1).'</code></pre>';
 	}
 	
-	private function render2Processor($text, $type) {
-		if(self::startsWithi($text, ' style=')) {
-			// #!wiki 문법 추가
-			$html = substr($text, 7);
-			$html = ltrim($html);
-			$skip = count(explode("{{{", reset(explode("}}}", $html))));
-			$explode = explode("}}}", $html);
-			return $html."_()_";
-			$html = htmlspecialchars_decode($html);
-			return '<div style='.$html.'>';
-		}
-		return '<pre><code>'.substr($text, 1).'</code></pre>';
-	}
-	
 	private function closureProcessor($text, $type) {
 		return '<div class="wiki-closure">'.$this->formatParser($text).'</div>';
 	}
@@ -807,6 +788,41 @@ class NamuMark {
 			}
 			
 		}
+		elseif(preg_match('/^이미지:(.+)$/', $href[0], $category)) {
+			array_push($this->links, array('target'=>$category[0], 'type'=>'file'));
+			if($this->imageAsLink)
+				return '<span class="alternative">[<a target="_blank" href="'.self::encodeURI($category[0]).'">image</a>]</span>';
+			
+			$paramtxt = '';
+			$csstxt = '';
+			if(!empty($href[1])) {
+				preg_match_all('/[&?]?([^=]+)=([^\&]+)/', htmlspecialchars_decode($href[1]), $param, PREG_SET_ORDER);
+				foreach($param as $pr) {
+					switch($pr[1]) {
+						case 'width':
+							if(preg_match('/^[0-9]+$/', $pr[2]))
+								$csstxt .= 'width: '.$pr[2].'px; ';
+							else
+								$csstxt .= 'width: '.$pr[2].'; ';
+							break;
+						case 'height':
+							if(preg_match('/^[0-9]+$/', $pr[2]))
+								$csstxt .= 'height: '.$pr[2].'px; ';
+							else
+								$csstxt .= 'height: '.$pr[2].'; ';
+							break;
+						case 'align':
+							if($pr[2]!='center')
+								$csstxt .= 'float: '.$pr[2].'; ';
+							break;
+						default:
+							$paramtxt.=' '.$pr[1].'="'.$pr[2].'"';
+					}
+				}
+			}
+			$paramtxt .= ($csstxt!=''?' style="'.$csstxt.'"':'');
+			return '<img src="/customupload/'.mb_substr($category[0], 4, strlen($category[0]), "UTF-8").'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).' onclick="window.open(\'/w/'.$category[0].'\', \'_blank\');">';
+		}
 		else {
 			if(self::startsWith($href[0], ':')) {
 				$href[0] = substr($href[0], 1);
@@ -822,12 +838,24 @@ class NamuMark {
 	}
 
 	private function macroProcessor($text, $type) {
+		$thewiki = mysqli_connect("localhost", "user", "password", "dbname");
+		mysqli_set_charset($thewiki,"utf8");
 		$macroName = strtolower($text);
 		if(!empty($this->macro_processors[$macroName]))
 			return $this->macro_processors[$macroName]();
 		switch($macroName) {
 			case 'br':
 				return '<br>';
+			case 'view(count)':
+				$sql = "SELECT sum(count) AS result FROM wiki_count";
+				$res = mysqli_query($thewiki, $sql);
+				$row = mysqli_fetch_assoc($res); 
+				return $row[result];
+			case 'view(recent)':
+				$sql = "SELECT no AS result FROM wiki_table ORDER BY no DESC LIMIT 1";
+				$res = mysqli_query($thewiki, $sql);
+				$row = mysqli_fetch_assoc($res); 
+				return $row[result];
 			case 'date':
 				return date('Y-m-d H:i:s');
 			case '목차':
@@ -843,20 +871,95 @@ class NamuMark {
 
 					$include = explode(',', $include);
 					array_push($this->links, array('target'=>$include[0], 'type'=>'include'));
-					if(($page = $this->WikiPage->getPage($include[0])) && !empty($page->text)) {
-						foreach($include as $var) {
-							$var = explode('=', ltrim($var));
-							if(empty($var[1]))
-								$var[1]='';
-							$page->text = str_replace('@'.$var[0].'@', $var[1], $page->text);
-						}
+					if(!$thewiki){ return ' '; }
+					
+					$w = $include[0];
+					$namespace = 0;
+					if(count(explode(":", $include[0]))>1){
+						$tp = explode(":", $include[0]);
+						switch($tp[0]){
+							case "틀":
+								$namespace = '1';
+								break;
+							case "분류":
+								$namespace = '2';
+								break;
+							case "파일":
+								$namespace = '3';
+								break;
+							case "사용자":
+								$namespace = '4';
+								break;
+							case "나무위키":
+								$namespace = '6';
+								break;
+							case "휴지통":
+								$namespace = '8';
+								break;
+							case "TheWiki":
+								$namespace = '10';
+								break;
+							case "이미지":
+								$namespace = '11';
+								break;
+							default:
+								$namespace = '0';
 						
-						$child = new NamuMark($page);
+						}
+						if($namespace>0){
+							$w = str_replace($tp[0].":", "", implode(":", $tp));
+						}
+					}
+					
+					$sql = "SELECT * FROM wiki_table WHERE p_namespace = '$namespace' AND p_title = binary('$w') ORDER BY no DESC LIMIT 1";
+					$res = mysqli_query($thewiki, $sql);
+					$moved_arr = mysqli_fetch_array($res);
+					
+					if($moved_arr[title]!=""){
+						$namespace = $moved_arr['namespace'];
+						$w = $moved_arr[title];
+					}
+					
+					$select = "SELECT * FROM wiki_table WHERE namespace = '$namespace' AND title = binary('$w') ORDER BY no DESC LIMIT 1";
+					$select_query = mysqli_query($thewiki, $select);
+					$select_array = mysqli_fetch_array($select_query);
+					if($select_array[contents]!=""){
+						$namutext = $select_array[contents];
+					}
+					mysqli_close($thewiki);
+					$mongoServer = "localhost";
+					$options = array('connect' => true);
+					try{
+						$mongo = new MongoClient('mongodb://'.$mongoServer.':27017', $options);
+					} catch (MongoConnectionException $ex){
+						error_log($ex->getMessage());
+						$cantmongo = true;
+					}
+					
+					if(!$cantmongo){
+						$collection = $mongo->nisdisk->docData170327;
+						if(!$namespace){
+							$query = array("namespace"=>"0", "title"=>$w);
+						} else {
+							$query = array("namespace"=>$namespace, "title"=>$w);
+						}
+						$arr = $collection->findOne($query);
+						$AllPage = $collection->count();
+					}
+					
+					if($namutext!=""){
+						$arr[text] = $namutext;
+					}
+					
+					if($arr[text]!="") {
+						$wPage2 = new PlainWikiPage($arr[text]);
+						$child = new NamuMark($wPage2);
 						$child->prefix = $this->prefix;
 						$child->imageAsLink = $this->imageAsLink;
 						$child->wapRender = $this->wapRender;
 						$child->included = true;
-						return $child->toHtml();
+						$twPrint = $child->toHtml();
+						return $twPrint;
 					}
 					return ' ';
 				}
