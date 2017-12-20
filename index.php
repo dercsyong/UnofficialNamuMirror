@@ -783,6 +783,19 @@
 			$arr[text] = str_replace("[[".$include."|[[".$filelink."]]]]", $change, $arr[text]);
 		}
 		
+		// #!folding 문법 하나만 적용
+		$foldingstart = explode('{{{#!folding ', $arr[text]);
+		if(count($foldingstart)>1){
+			$foldingcheck = true;
+			$foldopen = reset(explode("
+", $foldingstart[1]));
+			if(count(explode("#!end}}}", $foldingstart[1]))>1){
+				$foldingstart = str_replace("#!end}}}", "_(FOLDINGEND)_", $foldingstart[1]);
+				$foldingdata = next(explode($foldopen, reset(explode("_(FOLDINGEND)_", $foldingstart))));
+				$arr[text] = str_replace("{{{#!folding ".$foldopen.$foldingdata."#!end}}}", "_(FOLDINGSTART)_ _(FOLDINGDATA)_ _(FOLDINGEND)_", $arr[text]);
+			}
+		}
+		
 		// include 문서 존재할 경우 AJAX 처리하도록 설정
 		if($_GET[raw]!="1"){
 			$arr[text] = str_replace('[include(', '_(INCLUDESTART)_', $arr[text]);

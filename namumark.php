@@ -777,14 +777,14 @@ class NamuMark {
 				$imgarr = mysqli_fetch_array($imgres);
 				
 				if($imgarr[google]!=""){
-					return '<img src="'.$imgarr[google].'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).' onclick="window.open(\'/w/'.$category[0].'\', \'_blank\');">';
+					return '<img src="'.$imgarr[google].'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).'>';
 				} else if($imgarr[dir]!=""){
-					return '<img src="//images.nisdisk.ga/'.$imgarr[dir].'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).' onclick="window.open(\'/w/'.$category[0].'\', \'_blank\');">';
+					return '<img src="//images.nisdisk.ga/'.$imgarr[dir].'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).'>';
 				} else {
-					return '<script type="text/javascript"> $(document).ready(function(){ $.post("//images.nisdisk.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시중</font></span></p></td></tr></tbody></table></div>';
+					return '<script type="text/javascript"> $(document).ready(function(){ $.post("//images.thewiki.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시중</font></span></p></td></tr></tbody></table></div>';
 				}
 			} else {
-				return '<script type="text/javascript"> $(document).ready(function(){ enableajax_'.$xd.' = true; $("#ajax_file_'.$xd.'").click(function(){ if(enableajax_'.$xd.'){ enableajax_'.$xd.' = false; $.post("//images.nisdisk.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); } }); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시</font></span></p></td></tr></tbody></table></div>';
+				return '<script type="text/javascript"> $(document).ready(function(){ enableajax_'.$xd.' = true; $("#ajax_file_'.$xd.'").click(function(){ if(enableajax_'.$xd.'){ enableajax_'.$xd.' = false; $.post("//images.thewiki.ga/curl.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); } }); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시</font></span></p></td></tr></tbody></table></div>';
 			}
 			
 		}
@@ -821,7 +821,7 @@ class NamuMark {
 				}
 			}
 			$paramtxt .= ($csstxt!=''?' style="'.$csstxt.'"':'');
-			return '<img src="/customupload/'.mb_substr($category[0], 4, strlen($category[0]), "UTF-8").'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).' onclick="window.open(\'/w/'.$category[0].'\', \'_blank\');">';
+			return '<img src="/customupload/'.mb_substr($category[0], 4, strlen($category[0]), "UTF-8").'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).'>';
 		}
 		else {
 			if(self::startsWith($href[0], ':')) {
@@ -984,6 +984,14 @@ class NamuMark {
 						$var[$v[0]] = $v[1];
 					}
 					return '<script type="application/javascript" src="http://embed.nicovideo.jp/watch/'.$include[0].'/script?w='.(!empty($var['width'])?$var['width']:'640').'&h='.(!empty($var['height'])?$var['height']:'360').'"></script>';
+				}
+				elseif(self::startsWithi($text, 'age') && preg_match('/^age\((.+)\)$/i', $text, $include) && $include = $include[1]) {
+					$include = explode('-', $include);
+					$age = (date("md", date("U", mktime(0, 0, 0, $include[1], $include[2], $include[0]))) > date("md")
+						? ((date("Y") - $include[0]) - 1)
+						: (date("Y") - $include[0]));
+					return $age;
+					
 				}
 				elseif(self::startsWith($text, '*') && preg_match('/^\*([^ ]*)([ ].+)?$/', $text, $note)) {
 					$notetext = !empty($note[2])?$this->blockParser($note[2]):'';
