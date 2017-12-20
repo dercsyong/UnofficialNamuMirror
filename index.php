@@ -785,14 +785,17 @@
 		
 		// #!folding 문법 하나만 적용
 		$foldingstart = explode('{{{#!folding ', $arr[text]);
-		if(count($foldingstart)>1){
+		for($z=1;$z<count($foldingstart);$z++){
 			$foldingcheck = true;
-			$foldopen = reset(explode("
-", $foldingstart[1]));
-			if(count(explode("#!end}}}", $foldingstart[1]))>1){
-				$foldingstart = str_replace("#!end}}}", "_(FOLDINGEND)_", $foldingstart[1]);
-				$foldingdata = next(explode($foldopen, reset(explode("_(FOLDINGEND)_", $foldingstart))));
-				$arr[text] = str_replace("{{{#!folding ".$foldopen.$foldingdata."#!end}}}", "_(FOLDINGSTART)_ _(FOLDINGDATA)_ _(FOLDINGEND)_", $arr[text]);
+			$foldopentemp = reset(explode("
+", $foldingstart[$z]));
+			if(count(explode("#!end}}}", $foldingstart[$z]))>1){
+				$foldingtemp = str_replace("#!end}}}", "_(FOLDINGEND)_", $foldingstart[$z]);
+				$foldingdatatemp = next(explode($foldopentemp, reset(explode("_(FOLDINGEND)_", $foldingtemp))));
+				$md5 = md5(rand(1,10).$foldingdatatemp);
+				$foldopen[$md5] = $foldopentemp;
+				$foldingdata[$md5] = $foldingdatatemp;
+				$arr[text] = str_replace("{{{#!folding ".$foldopentemp.$foldingdatatemp."#!end}}}", "_(FOLDINGSTART)_".$md5."_(FOLDINGSTART2)_ _(FOLDINGDATA)_".$md5."_(FOLDINGDATA2)_ _(FOLDINGEND)_", $arr[text]);
 			}
 		}
 		
