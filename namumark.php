@@ -993,6 +993,9 @@ class NamuMark {
 					return $age;
 					
 				}
+				elseif(self::startsWithi($text, 'anchor') && preg_match('/^anchor\((.+)\)$/i', $text, $include) && $include = $include[1]) {
+					return "<a name='".$include."'></a>";
+				}
 				elseif(self::startsWith($text, '*') && preg_match('/^\*([^ ]*)([ ].+)?$/', $text, $note)) {
 					$notetext = !empty($note[2])?$this->blockParser($note[2]):'';
 					$id = $this->fnInsert($this->fn, $notetext, $note[1]);
