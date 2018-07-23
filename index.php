@@ -5,6 +5,11 @@
 		die(header("Location: /settings"));
 	}
 	
+	if(substr($_GET[w], -13)=="?noredirect=1"){
+		$_GET[w] = str_replace("?noredirect=1", "", $_GET[w]);
+		$noredirect = true;
+	}
+	
 	// Settings
 	$conn = mysqli_connect("localhost", "username", "userpass", "dbname");
 	mysqli_set_charset($conn,"utf8");
@@ -34,7 +39,7 @@
 			$cnt = mysqli_num_rows($res);
 			if(!$cnt){
 				$sql = "INSERT INTO settings(`ip`, `docVersion`, `docAutoLoad`, `imgAutoLoad`) VALUES ";
-				$sql .= "('".$_SERVER[HTTP_CF_CONNECTING_IP]."', '170327', '1', '1')";
+				$sql .= "('".$_SERVER[HTTP_CF_CONNECTING_IP]."', '180326', '1', '1')";
 				mysqli_query($conn, $sql);
 			}
 			
@@ -63,8 +68,11 @@
 				case "160229":
 					$docVersion = 160229;
 					break;
-				default:
+				case "170327":
 					$docVersion = 170327;
+					break;
+				default:
+					$docVersion = 180326;
 			}
 			
 			$sql = "UPDATE settings SET docVersion = '$docVersion', docAutoLoad = '1', imgAutoLoad = '1', enableAds = '1', enableViewCount = '1' WHERE ip = '$_SERVER[REMOTE_ADDR]'";
@@ -78,7 +86,7 @@
 			$cnt = mysqli_num_rows($res);
 			if(!$cnt){
 				$sql = "INSERT INTO settings(`ip`, `docVersion`, `docAutoLoad`, `imgAutoLoad`) VALUES ";
-				$sql .= "('$_SERVER[REMOTE_ADDR]', '170327', '1', '1')";
+				$sql .= "('$_SERVER[REMOTE_ADDR]', '180326', '1', '1')";
 				mysqli_query($conn, $sql);
 			}
 			
@@ -114,6 +122,9 @@
 					$imgAutoLoad = 0;
 			}
 			switch($_POST[docVersion]){
+				case "170327":
+					$docVersion = 170327;
+					break;
 				case "161031":
 					$docVersion = 161031;
 					break;
@@ -139,7 +150,7 @@
 					$docVersion = 160229;
 					break;
 				default:
-					$docVersion = 170327;
+					$docVersion = 180326;
 			}
 			switch($_POST[ViewCount]){
 				case "on":
@@ -157,7 +168,7 @@
 	}
 	
 	if($cantsubdb){
-		$settings[docVersion] = "170327";
+		$settings[docVersion] = "180326";
 		$settings[docAutoLoad] = 1;
 		$settings[imgAutoLoad] = 1;
 		$settings[enableAds] = 1;
@@ -578,7 +589,8 @@
 		//	case "160728": $collection = $mongo->nisdisk->docData160728; break;
 		//	case "160829": $collection = $mongo->nisdisk->docData160829; break;
 		//	case "161031": $collection = $mongo->nisdisk->docData161031; break;
-			default: $collection = $mongo->nisdisk->docData170327; break;
+		//	case "170327": $collection = $mongo->nisdisk->docData170327; break;
+			default: $collection = $mongo->nisdisk->docData180326; break;
 		}
 		
 		// 0이면 못불러오는 문제 있음
@@ -619,24 +631,37 @@
 		$get_admin_name_res = mysqli_query($thewiki, $get_admin_name);
 		$get_admin = mysqlI_fetch_array($get_admin_name_res);
 	}
-			if($w!="!MyPage"){ ?>
+		if($w!="!MyPage"){
+			if(count(explode("내문서:", $w))>1){ ?>
+				<div class="wiki-article-menu">
+					<div class="btn-group" role="group">
+						<a class="btn btn-secondary" itemprop="url" href="/userinfo/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>/contributions" role="button">문서 기여내역</a>
+						<a class="btn btn-secondary" itemprop="url" href="/userinfo/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>/discuss" role="button">토론 기여내역</a>
+						<a class="btn btn-secondary" itemprop="url" href="/history/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>" role="button">수정 내역</a>
+						<a class="btn btn-secondary" itemprop="url" href="/edit/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>" role="button">편집</a>
+						<a class="btn btn-secondary" itemprop="url" href="/discuss/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>/0" role="button">토론</a>
+					</div>
+				</div>
+			<?php } else { ?>
 				<div class="wiki-article-menu">
 					<div class="btn-group" role="group">
 						<a class="btn btn-secondary" href="#bottom" onclick="alert('<?=$contribution?>'); return false;" role="button">기여자 내역</a>
-						<a class="btn btn-secondary" itemprop="url" href="/history/<?=$_GET[w]?>" role="button">수정 내역</a>
-						<a class="btn btn-secondary" itemprop="url" href="/edit/<?=$_GET[w]?>" role="button">편집</a>
-						<a class="btn btn-secondary" itemprop="url" href="/discuss/<?=$_GET[w]?>/0" role="button">토론</a>
+						<a class="btn btn-secondary" itemprop="url" href="/backlink/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>" role="button">역링크</a>
+						<a class="btn btn-secondary" itemprop="url" href="/history/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>" role="button">수정 내역</a>
+						<a class="btn btn-secondary" itemprop="url" href="/edit/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>" role="button">편집</a>
+						<a class="btn btn-secondary" itemprop="url" href="/discuss/<?=str_replace("%2F", "/", rawurlencode($_GET[w]))?>/0" role="button">토론</a>
 					</div>
 				</div>
-<?php		} else { ?>
+			<?php } ?>
+<?php	} else { ?>
 				<div class="wiki-article-menu">
 					<div class="btn-group" role="group">
 						<a class="btn btn-secondary" href="/w/!ADReport" role="button">광고 수익금 보고서</a>
 					</div>
 				</div>
-<?php		} ?>
+<?php	} ?>
 				<h1 class="title">
-					<a href="#" data-npjax="true"><span itemprop="name"><?=$_GET[w]?></span></a> <?php if($select_array[contents]==""){ echo "(r20".$settings[docVersion]."판)"; } if($get_admin[name]!=""){ echo "<span style='font-size:1rem;'>(".$get_admin[name].")</span>"; } ?>
+					<span itemprop="name"><?=$_GET[w]?></span> <?php if($select_array[contents]==""){ echo "(r20".$settings[docVersion]."판)"; } if($get_admin[name]!=""){ echo "<span style='font-size:1rem;'>(".$get_admin[name].")</span>"; } ?>
 				</h1>
 				<p class="wiki-edit-date"><?=$wiki_count?></p>
 				<div class="wiki-content clearfix">
@@ -657,7 +682,8 @@
 								<div class="form-group" id="documentVersion">
 									<label class="control-label">덤프 버전</label>
 									<select class="form-control setting-item" name="docVersion">
-										<option value="170327">20170327</option>
+										<option value="180326">20180326 (* 권장)</option>
+										<!--option value="170327" <?php if($settings[docVersion]=="170327"){ echo "selected"; } ?>>20170327</option>
 										<option value="161031" <?php if($settings[docVersion]=="161031"){ echo "selected"; } ?>>20161031</option>
 										<option value="160829" <?php if($settings[docVersion]=="160829"){ echo "selected"; } ?>>20160829</option>
 										<option value="160728" <?php if($settings[docVersion]=="160728"){ echo "selected"; } ?>>20160728</option>
@@ -665,7 +691,7 @@
 										<option value="160530" <?php if($settings[docVersion]=="160530"){ echo "selected"; } ?>>20160530</option>
 										<option value="160425" <?php if($settings[docVersion]=="160425"){ echo "selected"; } ?>>20160425</option>
 										<option value="160329" <?php if($settings[docVersion]=="160329"){ echo "selected"; } ?>>20160329</option>
-										<option value="160229" <?php if($settings[docVersion]=="160229"){ echo "selected"; } ?>>20160229</option>
+										<option value="160229" <?php if($settings[docVersion]=="160229"){ echo "selected"; } ?>>20160229</option-->
 									</select>
 								</div>
 								
@@ -682,7 +708,7 @@
 									<label class="control-label">자동으로 이미지 읽기</label>
 									<div class="checkbox">
 										<label>
-											<input type="checkbox" name="imgAL" id="needads" onclick="if(!document.settings.ads.checked){ alert('광고 보이기 기능을 사용해야 이용 가능한 기능입니다'); document.settings.needads.checked = true; document.settings.ads.checked = true; }" <?php if($settings[imgAutoLoad]){ echo "checked"; }?>> 사용
+											<input type="checkbox" name="imgAL" id="needads" onclick="if(!document.settings.needads.checked){ alert('권장설정을 변경할 경우 이상 현상이 발생할 수 있습니다.'); }" <?php if($settings[imgAutoLoad]){ echo "checked"; }?>> 사용
 										</label>
 									</div>
 								</div>
@@ -691,7 +717,7 @@
 									<label class="control-label">광고 보이기</label>
 									<div class="checkbox">
 										<label>
-											<input type="checkbox" name="Ads" id="ads" onclick="if(document.settings.needads.checked){ alert('자동으로 이미지 읽기 기능을 사용해제 해야 합니다.'); document.settings.needads.checked = false; document.settings.ads.checked = false; }" <?php if($settings[enableAds]){ echo "checked"; }?>> 사용
+											<input type="checkbox" name="Ads" id="ads" onclick="if(!document.settings.ads.checked){ alert('The Wiki는 광고 수익금으로 운영됩니다.\n광고가 너무 거슬린다면 기술지원을 통해 피드백을 부탁드립니다.'); }" <?php if($settings[enableAds]){ echo "checked"; }?>> 사용
 										</label>
 									</div>
 								</div>
@@ -715,7 +741,7 @@
 								</div>
 								
 								<div class="form-group">
-									&nbsp;	<button type="submit" class="btn btn-primary" onclick="if(!document.settings.ads.checked&&document.settings.needads.checked){ alert('설정이 잘못되었습니다'); return false; }">적용</button>
+									&nbsp;	<button type="submit" class="btn btn-primary">적용</button>
 								</div>
 							</div>
 						</section>
@@ -742,10 +768,6 @@
 		die('<hr>이 문서는 삭제되었습니다.<hr><a href="/edit/'.$_GET[w].'" target="_top">새로운 문서 만들기</a> &nbsp; | &nbsp; <a id="addque">나무위키에서 가져오기</a></div></div><footer><p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p></footer></article></div></body></html>');
 	}
 	
-	// 파일 문서
-	if($namespace=="3"){
-		die('<h3>파일 문서는 나무위키로 리다이렉트 됩니다.<br>나무위키에서 이미지가 변경되었을 경우 <a href="/request/">기술지원</a>을 통해 문의해주시기 바랍니다.</h3><meta http-equiv="Refresh" content="3;url=//namu.wiki/w/'.$_GET[w].'"><script> alert("파일 문서는 나무위키로 리다이렉트 됩니다. 나무위키에서 이미지가 변경되었을 경우 기술지원을 통해 문의해주시기 바랍니다."); </script>');
-	}
 	//print_r($tparr);
 	if($tparr[text]!=""&&$arr[text]==""){
 		$arr[text] = $tparr[text];
@@ -769,22 +791,27 @@
 				$low_directory[$x] = $arr_root[target];
 			}
 			
-			$arr2 = "= 상위 분류 =
-";
-			foreach($root_directory as $key => $value){
-				if($value!=""&&$value!=$w){
-					$value = str_replace("_(NISDISKBAN)_", ",", $value);
-					$arr2 = $arr2."[[:분류:".$value."]]{{{#!html <br>}}}";
-				}
-			}
-			$arr2 = $arr2."
-= 하위 분류 =
+			$arr2 = "= 관련 분류 =
 ";
 			foreach($low_directory as $key=>$value){
 				if($value!=""&&$value!=$w){
 					$value = str_replace("_(NISDISKBAN)_", ",", $value);
-					$arr2 = $arr2."[[:분류:".$value."]]{{{#!html <br>}}}";
+					$unique_check[] = "분류:".$value;
+				//	$arr2 = $arr2."[[:분류:".$value."]]{{{#!html <br>}}}";
 				}
+			}
+			
+			foreach($root_directory as $key => $value){
+				if($value!=""&&$value!=$w){
+					$value = str_replace("_(NISDISKBAN)_", ",", $value);
+					$unique_check[] = $value;
+				//	$arr2 = $arr2."[[:".$value."]]{{{#!html <br>}}}";
+				}
+			}
+			$unique_check = array_unique($unique_check);
+			
+			foreach($unique_check as $value){
+				$arr2 = $arr2."[[:".$value."]]{{{#!html <br>}}}";
 			}
 			$arr2 = $arr2."
 = 분류된 문서 =
@@ -844,15 +871,16 @@
 		$arr[text] = str_replace("</div>}}}_(HTMLE)_", "</div>}}}{{{#!html </div>}}}", $arr[text]);
 		
 		// [[XXX|[[XXX]]]] 문법 우회 적용
+		$arr[text] = str_replace("| [[파일:", "|[[파일:", $arr[text]);
 		$filestart = explode('|[[파일:', $arr[text]);
 		for($x=0;$x<count($filestart)-1;$x++){
 			$include = end(explode("[[", $filestart[$x]));
 			$filelink = "파일:".reset(explode("]]", $filestart[$x+1]));
 			
 			if(substr($include, 0, 7)=="http://"||substr($include, 0, 8)=="https://"||substr($include, 0, 2)=="//"){
-				$change = '_(RINKTOSTART)_'.$include.'_(RINKTOMIDDLE)_[['.$filelink.']]_(RINKTOEND)_';
+				$change = '{{{#!html <a href="'.$include.'" target="_blank">}}}[['.$filelink.']]{{{#!html </a>}}}';
 			} else {
-				$change = '_(RINKTOSTART)_/w/'.$include.'_(RINKTOSELFMIDDLE)_[['.$filelink.']]_(RINKTOEND)_';
+				$change = '{{{#!html <a href="/w/'.$include.'" target="_self">}}}[['.$filelink.']]{{{#!html </a>}}}';
 			}
 			$arr[text] = str_replace("[[".$include."|[[".$filelink."]]]]", $change, $arr[text]);
 		}
@@ -882,8 +910,6 @@
 				$arr[text] = str_replace("{{{#!folding ".$foldopentemp.$foldingdatatemp."#!end}}}", "_(FOLDINGSTART)_".$md5."_(FOLDINGSTART2)_ _(FOLDINGDATA)_".$md5."_(FOLDINGDATA2)_ _(FOLDINGEND)_", $arr[text]);
 			}
 		}
-		
-		$arr[text] = str_replace("﻿||", "||", $arr[text]);
 		
 		// noredirect 지원
 		if($noredirect){
@@ -920,14 +946,6 @@
 				$wPrint = str_replace('<div class="wiki-table-wrap"> _(FOLDINGDATA)_'.$mymd5.'_(FOLDINGDATA2)_ </div>', '<div class="wiki-table-wrap"> '.$fPrint.' </div>', $wPrint);
 			}
 		}
-		
-		$wPrint = str_replace('_(RINKTOSTART)_', '<a href="', $wPrint);
-		$wPrint = str_replace('_(RINKTOMIDDLE)_', '" target="_blank">', $wPrint);
-		$wPrint = str_replace('_(RINKTOSELFMIDDLE)_', '" target="_self">', $wPrint);
-		$wPrint = str_replace('_(RINKTOEND)_', '</a>', $wPrint);
-		
-		// 이미지 queue 지원
-		$wPrint = str_replace("[IMGQUEUE]", $IMGQUEUE, $wPrint);
 		
 		$createDivButton = explode('_(AJAXINCLUDE)_', $wPrint);
 		for($x=1;$x<=count($createDivButton);$x++){

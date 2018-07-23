@@ -338,11 +338,41 @@ class NamuMark {
 						case 'red':
 							$td->style['background-color'] = "red";
 							break;
+						case 'pink':
+							$td->style['background-color'] = "pink";
+							break;
 						case 'green':
 							$td->style['background-color'] = "green";
 							break;
 						case 'yellow':
 							$td->style['background-color'] = "yellow";
+							break;
+						case 'dimgray':
+							$td->style['background-color'] = "dimgray";
+							break;
+						case 'midnightblue':
+							$td->style['background-color'] = "midnightblue";
+							break;
+						case 'lightskyblue':
+							$td->style['background-color'] = "lightskyblue";
+							break;
+						case 'orange':
+							$td->style['background-color'] = "orange";
+							break;
+						case 'firebrick':
+							$td->style['background-color'] = "firebrick";
+							break;
+						case 'gold':
+							$td->style['background-color'] = "gold";
+							break;
+						case 'forestgreen':
+							$td->style['background-color'] = "forestgreen";
+							break;
+						case 'orangered':
+							$td->style['background-color'] = "orangered";
+							break;
+						case 'darkslategray':
+							$td->style['background-color'] = "darkslategray";
 							break;
 						default:
 							if(self::startsWith($prop, 'table')) {
@@ -585,7 +615,7 @@ class NamuMark {
 			if($this->wapRender)
 				$result .= $line.'<br/><br/>';
 			else
-				$result .= '<p>'.$line.'</p>';
+				$result .= $line.'<br/>';
 		}
 
 		return $result;
@@ -879,6 +909,20 @@ class NamuMark {
 		switch($macroName) {
 			case 'br':
 				return '<br>';
+			case 'view(count)':
+				$thewiki = mysqli_connect("localhost", "username", "userpass", "dbname");
+				mysqli_set_charset($thewiki,"utf8");
+				$sql = "SELECT sum(count) AS result FROM wiki_info_data";
+				$res = mysqli_query($thewiki, $sql);
+				$row = mysqli_fetch_assoc($res); 
+				return $row[result];
+			case 'view(recent)':
+				$thewiki = mysqli_connect("localhost", "username", "userpass", "dbname");
+				mysqli_set_charset($thewiki,"utf8");
+				$sql = "SELECT count(*) AS result FROM wiki_info_data_recent";
+				$res = mysqli_query($thewiki, $sql);
+				$row = mysqli_fetch_array($res); 
+				return $row[result];
 			case 'date':
 				return date('Y-m-d H:i:s');
 			case '목차':
@@ -888,68 +932,7 @@ class NamuMark {
 			case 'footnote':
 				return $this->printFootnote();
 			default:
-				if(self::startsWithi(strtolower($text), 'pagecount')){
-					$conn = mysqli_connect("localhost", "username", "userpass", "dbname");
-					mysqli_set_charset($conn,"utf8");
-					if(!$conn){
-						$cantsubdb = true;
-					}
-					$sql = "SELECT * FROM settings WHERE ip = '$_SERVER[REMOTE_ADDR]'";
-					$res = mysqli_query($conn, $sql);
-					$cnt = mysqli_num_rows($res);
-					
-					if($cnt){
-						$settings = mysqli_fetch_array($res);
-					} else {
-						$sql = "SELECT * FROM settings WHERE ip = '0.0.0.0'";
-						$res = mysqli_query($conn, $sql);
-						$settings = mysqli_fetch_array($res);
-					}
-					
-					$options = array('connect' => true);
-					try{
-						$mongo = new MongoClient('mongodb://localhost:27017', $options);
-					} catch (MongoConnectionException $ex){
-						error_log($ex->getMessage());
-						$cantmongo = true;
-					}
-					if(!$cantmongo||$cantmaindb){
-						// 문서내용을 불러옵니다.
-						switch($settings[docVersion]){
-						//	case "160229": $collection = $mongo->nisdisk->docData160229; break;
-						//	case "160329": $collection = $mongo->nisdisk->docData160329; break;
-						//	case "160425": $collection = $mongo->nisdisk->docData160425; break;
-						//	case "160530": $collection = $mongo->nisdisk->docData160530; break;
-						//	case "160627": $collection = $mongo->nisdisk->docData160627; break;
-						//	case "160728": $collection = $mongo->nisdisk->docData160728; break;
-						//	case "160829": $collection = $mongo->nisdisk->docData160829; break;
-						//	case "161031": $collection = $mongo->nisdisk->docData161031; break;
-							default: $collection = $mongo->nisdisk->docData170327; break;
-						}
-						$AllPage = $collection->count();
-					}
-					return $AllPage;
-				}
-				elseif(self::startsWithi(strtolower($text), 'view') && preg_match('/^view\((.+)\)$/i', $text, $include) && $include = $include[1]) {
-					$thewiki = mysqli_connect("localhost", "username", "userpass", "dbname");
-					mysqli_set_charset($thewiki,"utf8");
-					switch($include){
-						case "count":
-							$sql = "SELECT sum(count) AS result FROM wiki_count";
-							$res = mysqli_query($thewiki, $sql);
-							$row = mysqli_fetch_assoc($res); 
-							return $row[result];
-						case "recent":
-							$sql = "SELECT no AS result FROM wiki_contents_data ORDER BY no DESC LIMIT 1";
-							$res = mysqli_query($thewiki, $sql);
-							$row = mysqli_fetch_assoc($res); 
-							return $row[result];
-						default:
-							return '';
-					}
-					return "<a name='".$include."'></a>";
-				}
-				elseif(self::startsWithi($text, 'include') && preg_match('/^include\((.+)\)$/i', $text, $include) && $include = $include[1]) {
+				if(self::startsWithi($text, 'include') && preg_match('/^include\((.+)\)$/i', $text, $include) && $include = $include[1]) {
 					if($this->included)
 						return ' ';
 					$include = explode(',', $include);
@@ -1022,7 +1005,7 @@ class NamuMark {
 					}
 					
 					if(!$cantmongo){
-						$collection = $mongo->nisdisk->docData170327;
+						$collection = $mongo->nisdisk->docData180326;
 						if(!$namespace){
 							$query = array("namespace"=>"0", "title"=>$w);
 						} else {
@@ -1068,15 +1051,16 @@ class NamuMark {
 					$arr[text] = str_replace("</div>}}}_(HTMLE)_", "</div>}}}{{{#!html </div>}}}", $arr[text]);
 					
 					// [[XXX|[[XXX]]]] 문법 우회 적용
+					$arr[text] = str_replace("| [[파일:", "|[[파일:", $arr[text]);
 					$filestart = explode('|[[파일:', $arr[text]);
 					for($x=0;$x<count($filestart)-1;$x++){
 						$include2 = end(explode("[[", $filestart[$x]));
 						$filelink = "파일:".reset(explode("]]", $filestart[$x+1]));
 						
 						if(substr($include2, 0, 7)=="http://"||substr($include2, 0, 8)=="https://"||substr($include2, 0, 2)=="//"){
-							$change = '_(RINKTOSTART)_'.$include.'_(RINKTOMIDDLE)_[['.$filelink.']]_(RINKTOEND)_';
+							$change = '{{{#!html <a href="'.$include2.'" target="_blank">}}}[['.$filelink.']]{{{#!html </a>}}}';
 						} else {
-							$change = '_(RINKTOSTART)_/w/'.$include.'_(RINKTOSELFMIDDLE)_[['.$filelink.']]_(RINKTOEND)_';
+							$change = '{{{#!html <a href="/w/'.$include2.'" target="_self">}}}[['.$filelink.']]{{{#!html </a>}}}';
 						}
 						$arr[text] = str_replace("[[".$include2."|[[".$filelink."]]]]", $change, $arr[text]);
 					}
@@ -1107,7 +1091,6 @@ class NamuMark {
 							$arr[text] = str_replace("{{{#!folding ".$foldopentemp.$foldingdatatemp."#!end}}}", "_(FOLDINGSTART)_".$md5."_(FOLDINGSTART2)_ _(FOLDINGDATA)_".$md5."_(FOLDINGDATA2)_ _(FOLDINGEND)_", $arr[text]);
 						}
 					}
-					$arr[text] = str_replace("﻿||", "||", $arr[text]);
 					
 					// [datetime] [PageCount] 지원
 					$arr[text] = str_replace("[datetime]", date("Y-m-d H:i:s"), $arr[text]);
@@ -1149,11 +1132,6 @@ class NamuMark {
 							}
 						}
 						
-						$twPrint = str_replace('_(RINKTOSTART)_', '<a href="', $twPrint);
-						$twPrint = str_replace('_(RINKTOMIDDLE)_', '" target="_blank">', $twPrint);
-						$twPrint = str_replace('_(RINKTOSELFMIDDLE)_', '" target="_self">', $twPrint);
-						$twPrint = str_replace('_(RINKTOEND)_', '</a>', $twPrint);
-						
 						return $twPrint;
 					}
 					return ' ';
@@ -1169,7 +1147,7 @@ class NamuMark {
 					}
 					return '<iframe width="'.(!empty($var['width'])?$var['width']:'640').'" height="'.(!empty($var['height'])?$var['height']:'360').'" src="//www.youtube.com/embed/'.$include[0].'" frameborder="0" allowfullscreen></iframe>';
 				}
-				elseif(self::startsWith($text, 'nicovideo') && preg_match('/^nicovideo\((.+)\)$/', $text, $include) && $include = $include[1]) {
+				elseif(self::startsWith(strtolower($text), 'nicovideo') && preg_match('/^nicovideo\((.+)\)$/i', $text, $include) && $include = $include[1]) {
 					$include = explode(',', $include);
 					$var = array();
 					foreach($include as $v) {
@@ -1180,7 +1158,7 @@ class NamuMark {
 					}
 					return '<script type="application/javascript" src="http://embed.nicovideo.jp/watch/'.$include[0].'/script?w='.(!empty($var['width'])?$var['width']:'640').'&h='.(!empty($var['height'])?$var['height']:'360').'"></script>';
 				}
-				elseif(self::startsWithi($text, 'age') && preg_match('/^age\((.+)\)$/i', $text, $include) && $include = $include[1]) {
+				elseif(self::startsWithi(strtolower($text), 'age') && preg_match('/^age\((.+)\)$/i', $text, $include) && $include = $include[1]) {
 					$include = explode('-', $include);
 					$age = (date("md", date("U", mktime(0, 0, 0, $include[1], $include[2], $include[0]))) > date("md")
 						? ((date("Y") - $include[0]) - 1)
@@ -1188,7 +1166,73 @@ class NamuMark {
 					return $age;
 					
 				}
-				elseif(self::startsWithi($text, 'anchor') && preg_match('/^anchor\((.+)\)$/i', $text, $include) && $include = $include[1]) {
+				elseif(self::startsWithi(strtolower($text), 'pagecount') && preg_match('/^pagecount\((.+)\)$/i', $text, $include) && $include = $include[1]) {
+					$conn = mysqli_connect("localhost", "username", "userpass", "dbname");
+					mysqli_set_charset($conn,"utf8");
+					if(!$conn){
+						$cantsubdb = true;
+					}
+					$sql = "SELECT * FROM settings WHERE ip = '$_SERVER[REMOTE_ADDR]'";
+					$res = mysqli_query($conn, $sql);
+					$cnt = mysqli_num_rows($res);
+					
+					if($cnt){
+						$settings = mysqli_fetch_array($res);
+					} else {
+						$sql = "SELECT * FROM settings WHERE ip = '0.0.0.0'";
+						$res = mysqli_query($conn, $sql);
+						$settings = mysqli_fetch_array($res);
+					}
+					
+					$options = array('connect' => true);
+					try{
+						$mongo = new MongoClient('mongodb://localhost:27017', $options);
+					} catch (MongoConnectionException $ex){
+						error_log($ex->getMessage());
+						$cantmongo = true;
+					}
+					
+					if(!$cantmongo||$cantmaindb){
+						// 문서내용을 불러옵니다.
+						switch($settings[docVersion]){
+						//	case "160229": $collection = $mongo->nisdisk->docData160229; break;
+						//	case "160329": $collection = $mongo->nisdisk->docData160329; break;
+						//	case "160425": $collection = $mongo->nisdisk->docData160425; break;
+						//	case "160530": $collection = $mongo->nisdisk->docData160530; break;
+						//	case "160627": $collection = $mongo->nisdisk->docData160627; break;
+						//	case "160728": $collection = $mongo->nisdisk->docData160728; break;
+						//	case "160829": $collection = $mongo->nisdisk->docData160829; break;
+						//	case "161031": $collection = $mongo->nisdisk->docData161031; break;
+						//	case "170327": $collection = $mongo->nisdisk->docData170327; break;
+							default: $collection = $mongo->nisdisk->docData180326; break;
+						}
+						switch($include){
+							case "문서":
+								$query2 = array("namespace"=>"0");
+								break;
+							case "틀":
+								$query2 = array("namespace"=>"1");
+								break;
+							case "분류":
+								$query2 = array("namespace"=>"2");
+								break;
+							case "파일":
+								$query2 = array("namespace"=>"3");
+								break;
+							case "사용자":
+								$query2 = array("namespace"=>"4");
+								break;
+							case "나무위키":
+								$query2 = array("namespace"=>"6");
+								break;
+							default:
+								break;
+						}
+						$AllPage = $collection->count($query2);
+					}
+					return $AllPage;
+				}
+				elseif(self::startsWithi(strtolower($text), 'anchor') && preg_match('/^anchor\((.+)\)$/i', $text, $include) && $include = $include[1]) {
 					return "<a name='".$include."'></a>";
 				}
 				elseif(self::startsWith($text, '*') && preg_match('/^\*([^ ]*)([ ].+)?$/', $text, $note)) {
