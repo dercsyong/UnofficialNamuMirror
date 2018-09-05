@@ -784,7 +784,7 @@
 		
 		// noredirect 지원
 		if($noredirect){
-			$arr['text'] = "{{{".$arr['text']."}}}";
+			define('noredirect', true);
 		}
 		
 		// 하위문서 링크
@@ -896,6 +896,7 @@
 			$wPrint = str_replace('@'.$key.'@', $val, $wPrint);
 		}
 		
+		$wPrint = str_replace('<a href="/w/'.str_replace(array('%3A', '%2F', '%23', '%28', '%29'), array(':', '/', '#', '(', ')'), rawurlencode($_GET['w'])).'"', '<a style="font-weight:bold;" href="/w/'.str_replace(array('%3A', '%2F', '%23', '%28', '%29'), array(':', '/', '#', '(', ')'), rawurlencode($_GET['w'])).'"', $wPrint);
 		echo str_replace('<br> <br>', '', $wPrint);
 	} else {
 		if($namespace=="11"){
