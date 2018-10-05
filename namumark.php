@@ -188,9 +188,11 @@ class NamuMark {
 
 		if(self::startsWith($text, '#') && preg_match('/^#(?:redirect|넘겨주기) (.+)$/im', $text, $target)) {
 			array_push($this->links, array('target'=>$target[1], 'type'=>'redirect'));
+			//@header('Location: '.$this->prefix.'/'.self::encodeURI($target[1]));
 			if(defined('noredirect')){
 				return '#redirect '.$target[1];
 			}
+			
 			if(str_replace("http://thewiki.ga/w/", "", $_SERVER['HTTP_REFERER'])==str_replace("+", "%20", urlencode($target[1]))||str_replace("https://thewiki.ga/w/", "", $_SERVER['HTTP_REFERER'])==str_replace("+", "%20", urlencode($target[1]))){
 				return '흐음, 잠시만요. <b>같은 문서끼리 리다이렉트 되고 있는 것 같습니다!</b><br>다음 문서중 하나를 수정하여 문제를 해결할 수 있습니다.<hr><a href="/history/'.self::encodeURI($target[1]).'" target="_blank">'.$target[1].'</a><br><a href="/history/'.str_replace("+", "%20", urlencode($_GET['w'])).'" target="_blank">'.$_GET['w'].'</a><hr>문서를 수정했는데 같은 문제가 계속 발생하나요? <a href="'.self::encodeURI($target[1]).'"><b>여기</b></a>를 확인해보세요!';
 			} else {
@@ -836,26 +838,12 @@ class NamuMark {
 			$paramtxt .= ($csstxt!=''?' style="'.$csstxt.'"':'');
 			
 			$xd = md5($category[0].rand(1,50));
-			$conn = mysqli_connect("localhost", "username", "userpass", "dbname") or die("Can't access DB");
-			mysqli_set_charset($conn,"utf8");
-			$sql = "SELECT * FROM settings WHERE ip = '$_SERVER[REMOTE_ADDR]'";
-			$res = mysqli_query($conn, $sql);
-			$cnt = mysqli_num_rows($res);
-			
-			if($cnt){
-				$settings = mysqli_fetch_array($res);
-			} else {
-				$sql = "SELECT * FROM settings WHERE ip = '0.0.0.0'";
-				$res = mysqli_query($conn, $sql);
-				$settings = mysqli_fetch_array($res);
-			}
-			
 			$ext = strtolower(end(explode(".", $category[0])));
 			$hash = sha1($category[0], FALSE);
 			
 			if(is_file("../files/".$hash.".".$ext)){
 				$google_photos_check = fopen("../files/".$hash.".".$ext, "r");
-				$google_photos = fread($google_photos_check, filesize("../files/".$hash.".".$ext));
+				$google_photos = fread($google_photos_check, 158);
 				fclose($google_photos_check);
 				if(substr($google_photos, 0, 8)=="https://"){
 					return '<img src="'.$google_photos.'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).'>';
@@ -864,15 +852,16 @@ class NamuMark {
 				}
 			}
 			$img = "SELECT * FROM file WHERE name = binary('$category[0]') LIMIT 1";
-			$imgres = mysqli_query($conn, $img);
+			$imgres = mysqli_query($config_db, $img);
 			$imgarr = mysqli_fetch_array($imgres);
 			mysqli_close($conn);
 			if($imgarr['google']!=""){
 				return '<img src="'.$imgarr['google'].'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).'>';
 			} else if($imgarr['dir']!=""){
+				//return '[ No.'.$imgarr['no'].' ] 이미지 작업 대기중';
 				return '<img src="//images.thewiki.ga/'.$imgarr['dir'].'" '.trim(str_replace('style="', 'style="cursor:hand; ', $paramtxt)).'>';
 			} else {
-				return '<script type="text/javascript"> $(document).ready(function(){ $.post("//api.thewiki.ga/images.php?hash=<<hidden>>", {token:"<<hidden>", w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시중</font></span></p></td></tr></tbody></table></div>';
+				return '<script type="text/javascript"> $(document).ready(function(){ $.post("//thewiki.ga/API.php", {w:"'.$category[0].'", p:"'.str_replace('"', '\"', $paramtxt).'"}, function(data){ $("#ajax_file_'.$xd.'").html(data); $("#ajax_file_'.$xd.'").prepend("<input type=\'hidden\' id=\'enableajax_'.$xd.'\' value=\'false\'>"); $("#ajax_file_'.$xd.' > img").unwrap(); }, "html"); }); </script><div id="ajax_file_'.$xd.'" style="z-index:-1;"><table class="wiki-table" style=""><tbody><tr><td style="background-color:#93C572; text-align:center;"><p><span class="wiki-size size-1"><font color="006400">'.$category[0].' 이미지 표시중</font></span></p></td></tr></tbody></table></div>';
 			}
 		}
 		elseif(preg_match('/^이미지:(.+)$/', $href[0], $category)) {
@@ -932,18 +921,20 @@ class NamuMark {
 			case 'br':
 				return '<br>';
 			case 'view(count)':
-				$thewiki = mysqli_connect("localhost", "username", "userpass", "dbname");
-				mysqli_set_charset($thewiki,"utf8");
-				$sql = "SELECT sum(count) AS result FROM wiki_info_data";
-				$res = mysqli_query($thewiki, $sql);
+				$sql = "SELECT sum(count) AS result FROM wiki_count";
+				$res = mysqli_query($wiki_db, $sql);
 				$row = mysqli_fetch_assoc($res); 
+				if(empty($row['result'])){
+					$row['result'] = ' 0';
+				}
 				return $row['result'];
 			case 'view(recent)':
-				$thewiki = mysqli_connect("localhost", "username", "userpass", "dbname");
-				mysqli_set_charset($thewiki,"utf8");
-				$sql = "SELECT count(*) AS result FROM wiki_info_data_recent";
-				$res = mysqli_query($thewiki, $sql);
+				$sql = "SELECT count(*) AS result FROM wiki_contents_history";
+				$res = mysqli_query($wiki_db, $sql);
 				$row = mysqli_fetch_array($res); 
+				if(empty($row['result'])){
+					$row['result'] = ' 0';
+				}
 				return $row['result'];
 			case 'date':
 				return date('Y-m-d H:i:s');
@@ -997,17 +988,8 @@ class NamuMark {
 						}
 					}
 					
-					$data = array('namespace'=>$namespace, 'title'=>$w, 'token'=><<hidden>>, 'option'=>'namumark');
-					$cURLs = 'http://api.thewiki.ga/document.php?hash='.<<hidden>>;
-					$ch = curl_init();
-					curl_setopt($ch, CURLOPT_URL, $cURLs);
-					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-					curl_setopt($ch, CURLOPT_POST, 1);
-					curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-					curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-					$api_result = json_decode(curl_exec($ch));
-					curl_close($ch);
+					$_POST = array('namespace'=>$namespace, 'title'=>$w, 'ip'=>$_SERVER['REMOTE_ADDR'], 'option'=>'original');
+					include $_SERVER['DOCUMENT_ROOT'].'/API.php';
 					
 					if($api_result->status!='success'||$api_result->type=='refresh'){
 						return ' ';
@@ -1019,58 +1001,9 @@ class NamuMark {
 					if(defined("isdeleted")){
 						return ' ';
 					}
-					// 하위문서 링크
-					$arr['text'] = str_replace("[[/", "[[".$_GET['w']."/", $arr['text']);
 					
-					// #!wiki style 문법 우회 적용
-					$arr['text'] = str_replace("}}}", "_(HTMLE)_", $arr['text']);
-					$htmlstart = explode('{{{#!wiki style="', $arr['text']);
-					for($x=1;$x<count($htmlstart);$x++){
-						$style = reset(explode('"', $htmlstart[$x]));
-						$arr['text'] = str_replace('{{{#!wiki style="'.$style.'"', '{{{#!html <div style="'.$style.'">}}}', $arr['text']);
-						
-						$loop = explode("_(HTMLE)_", next(explode('{{{#!html <div style="'.$style.'">}}}', $arr['text'])));
-						$check = true;
-						$z = 0;
-						while($check){
-							if(count(explode("{{{", $loop[$z]))>1){
-								$z = $z + count(explode("{{{", $loop[$z])) - 1;
-							} else {
-								$arr['text'] = str_replace($loop[$z-1]."_(HTMLE)_".$loop[$z]."_(HTMLE)_", $loop[$z-1]."_(HTMLE)_".$loop[$z]."{{{#!html </div>}}}", $arr['text']);
-								$check = false;
-							}
-							if($z>count($loop)){
-								$check = false;
-							}
-						}
-					}
-					$arr['text'] = str_replace("</div>}}}_(HTMLE)_", "</div>}}}{{{#!html </div>}}}", $arr['text']);
-					
-					// [[XXX|[[XXX]]]] 문법 우회 적용
-					$arr['text'] = str_replace("| [[파일:", "|[[파일:", $arr['text']);
-					$filestart = explode('|[[파일:', $arr['text']);
-					for($x=0;$x<count($filestart)-1;$x++){
-						$include2 = end(explode("[[", $filestart[$x]));
-						$filelink = "파일:".reset(explode("]]", $filestart[$x+1]));
-						
-						if(substr($include2, 0, 7)=="http://"||substr($include2, 0, 8)=="https://"||substr($include2, 0, 2)=="//"){
-							$change = '{{{#!html <a href="'.$include2.'" target="_blank">}}}[['.$filelink.']]{{{#!html </a>}}}';
-						} else {
-							$change = '{{{#!html <a href="/w/'.$include2.'" target="_self">}}}[['.$filelink.']]{{{#!html </a>}}}';
-						}
-						$arr['text'] = str_replace("[[".$include2."|[[".$filelink."]]]]", $change, $arr['text']);
-					}
-					
-					// 작업마무리
-					$arr['text'] = str_replace("_(HTMLS)_", "{{{", $arr['text']);
-					$arr['text'] = str_replace("_(HTMLE)_", "}}}", $arr['text']);
-					$arr['text'] = str_replace("_(HTMLSTART)_", "{{{#!html", $arr['text']);
-					$arr['text'] = str_replace("_(NAMUMIRRORHTMLSTART)_", "{{{#!html <div style=", $arr['text']);
-					$arr['text'] = str_replace("_(NAMUMIRRORHTMLEND)_", "}}}", $arr['text']);
-					$arr['text'] = str_replace("_(NAMUMIRRORDAASH)_", "'", $arr['text']);
-					$arr['text'] = str_replace("﻿#", "#", $arr['text']);
-					$arr['text'] = str_replace("﻿||", "||", $arr['text']);
-					$tmparr = $arr['text'];
+					// themark 통합
+					$arr['text'] = simplemark($arr['text']);
 					
 					// #!folding 문법 우선 적용
 					$foldingstart = explode('{{{#!folding ', $arr['text']);
@@ -1087,10 +1020,6 @@ class NamuMark {
 							$arr['text'] = str_replace("{{{#!folding ".$foldopentemp.$foldingdatatemp."#!end}}}", "_(FOLDINGSTART)_".$md5."_(FOLDINGSTART2)_ _(FOLDINGDATA)_".$md5."_(FOLDINGDATA2)_ _(FOLDINGEND)_", $arr['text']);
 						}
 					}
-					$arr['text'] = str_replace("﻿||", "||", $arr['text']);
-					
-					// [datetime] [PageCount] 지원
-					$arr['text'] = str_replace("[datetime]", date("Y-m-d H:i:s"), $arr['text']);
 					
 					if($arr['text']!="") {
 						foreach($include as $var) {
