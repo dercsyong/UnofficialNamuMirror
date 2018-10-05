@@ -1,8 +1,13 @@
 <?php
 	session_start();
 	
-	if($_GET['w']=="!MyPage"){
-		die(header("Location: /settings"));
+	if(empty($_GET['w'])){
+		$_GET['w'] = 'TheWiki:홈';
+	}
+	
+	if(substr($_GET['w'], -10)=="?skin=dark"){
+		header('HTTP/1.0 403 Forbidden');
+		die('403 forbidden');
 	}
 	
 	if(substr($_GET['w'], -13)=="?noredirect=1"){
@@ -10,40 +15,28 @@
 		$noredirect = true;
 	}
 	
-	// Settings
-	$conn = mysqli_connect("localhost", "username", "userpass", "dbname");
-	mysqli_set_charset($conn,"utf8");
-	if(!$conn){
-		$cantsubdb = true;
-		echo "<script> alert('보조 DB 서버에 접속할 수 없습니다.\\n일부 기능이 동작하지 않습니다.'); </script>";
+	if($_GET['w']=="!MyPage"){
+		die(header("Location: /settings"));
 	}
-	$sql = "SELECT * FROM settings WHERE ip = '$_SERVER[REMOTE_ADDR]'";
-	$res = mysqli_query($conn, $sql);
-	$cnt = mysqli_num_rows($res);
 	
-	if($cnt){
-		$settings = mysqli_fetch_array($res);
-	} else {
-		$sql = "SELECT * FROM settings WHERE ip = '0.0.0.0'";
-		$res = mysqli_query($conn, $sql);
-		$settings = mysqli_fetch_array($res);
-	}
-	$sqlref = "SELECT * FROM settings WHERE ip = '0.0.0.0'";
-	$resref = mysqli_query($conn, $sqlref);
-	$settingsref = mysqli_fetch_array($resref);
 	if($_GET['settings']!=''){
 		$_GET['w'] = "!MyPage";
 		$sql = "SELECT * FROM settings WHERE ip = '$_SERVER[REMOTE_ADDR]'";
 		if($_GET['autover']!=""){
-			$res = mysqli_query($conn, $sql);
+			$res = mysqli_query($config_db, $sql);
 			$cnt = mysqli_num_rows($res);
 			if(!$cnt){
 				$sql = "INSERT INTO settings(`ip`, `docVersion`, `docAutoLoad`, `imgAutoLoad`) VALUES ";
 				$sql .= "('".$_SERVER['REMOTE_ADDR']."', '180326', '1', '1')";
-				mysqli_query($conn, $sql);
+				mysqli_query($config_db, $sql);
 			}
 			
 			switch($_GET['autover']){
+				case '180925_alphawiki':
+					$docVersion = 180925;
+					$imgAutoLoad = 0;
+					$enableAds = 1;
+					break;
 				case '170327':
 					$docVersion = 170327;
 					$imgAutoLoad = 0;
@@ -93,19 +86,19 @@
 					$docVersion = 180326;
 			}
 			
-			$sql = "UPDATE settings SET docVersion = '$docVersion', docAutoLoad = '1', imgAutoLoad = '1', enableAds = '1', enableViewCount = '1' WHERE ip = '$_SERVER[REMOTE_ADDR]'";
-			mysqli_query($conn, $sql);
+			$sql = "UPDATE settings SET docVersion = '$docVersion', docAutoLoad = '1', imgAutoLoad = '1', enableAds = '1', enableViewCount = '1', enableNotice = '1' WHERE ip = '$_SERVER[REMOTE_ADDR]'";
+			mysqli_query($config_db, $sql);
 			
 			die(header("Location: /w/TheWiki:홈"));
 		}
 		if($_GET['create']!=""){
 			$sql = "SELECT * FROM settings WHERE ip = '$_SERVER[REMOTE_ADDR]'";
-			$res = mysqli_query($conn, $sql);
+			$res = mysqli_query($config_db, $sql);
 			$cnt = mysqli_num_rows($res);
 			if(!$cnt){
 				$sql = "INSERT INTO settings(`ip`, `docVersion`, `docAutoLoad`, `imgAutoLoad`) VALUES ";
 				$sql .= "('".$_SERVER['REMOTE_ADDR']."', '180326', '1', '1')";
-				mysqli_query($conn, $sql);
+				mysqli_query($config_db, $sql);
 			}
 			
 			die(header("Location: /settings"));
@@ -140,6 +133,11 @@
 					$imgAutoLoad = 0;
 			}
 			switch($_POST['docVersion']){
+				case '180925_alphawiki':
+					$docVersion = 180925;
+					$imgAutoLoad = 0;
+					$enableAds = 1;
+					break;
 				case '170327':
 					$docVersion = 170327;
 					$imgAutoLoad = 0;
@@ -197,19 +195,10 @@
 			}
 			
 			$sql = "UPDATE settings SET docVersion = '$docVersion', docAutoLoad = '$docAutoLoad', imgAutoLoad = '$imgAutoLoad', enableAds = '$enableAds', enableNotice = '$enableNotice', enableViewCount = '$enableViewCount' WHERE ip = '$_SERVER[REMOTE_ADDR]'";
-			mysqli_query($conn, $sql);
+			mysqli_query($config_db, $sql);
 			
 			die(header("Location: /settings"));
 		}
-	}
-	
-	if($cantsubdb){
-		$settings['docVersion'] = '180326';
-		$settings['docAutoLoad'] = 1;
-		$settings['imgAutoLoad'] = 1;
-		$settings['enableAds'] = 1;
-		$settings['enableNotice'] = 1;
-		$settings['enableViewCount'] = 1;
 	}
 	
 	if($_GET['w']=="!ADReport"){
@@ -247,6 +236,14 @@
 			case '이미지':
 				$namespace = '11';
 				break;
+			case '집단창작':
+				$alpha = true;
+				$namespace = '12';
+				break;
+			case '알파위키':
+				$alpha = true;
+				$namespace = '13';
+				break;
 			default:
 				$namespace = '0';
 		
@@ -270,6 +267,7 @@
 	if($_GET['raw']==''){
 		$wiki_count = sha1($_GET['w']);
 ?>
+<!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="utf-8"/>
@@ -299,10 +297,10 @@
 		<script type="text/javascript" src="/namuwiki/js/jquery-2.1.4.min.js"></script>
 		<!--<![endif]-->
 		<!--[if lt IE 9]>
-			<script type="text/javascript" src="/namuwiki/js/jquery-1.11.3.min.js?1444428364"></script>
-			<script type="text/javascript" src="/namuwiki/js/html5.js?1444428364"></script>
-			<script type="text/javascript" src="/namuwiki/js/respond.min.js?1444428364"></script>
-			<![endif]-->
+		<script type="text/javascript" src="/namuwiki/js/jquery-1.11.3.min.js?1444428364"></script>
+		<script type="text/javascript" src="/namuwiki/js/html5.js?1444428364"></script>
+		<script type="text/javascript" src="/namuwiki/js/respond.min.js?1444428364"></script>
+		<![endif]-->
 		<script type="text/javascript" src="/namuwiki/js/jquery.lazyload.min.js"></script>
 		<script type="text/javascript" src="/namuwiki/js/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="/namuwiki/js/tether.min.js"></script>
@@ -315,11 +313,22 @@
 		<script type="text/javascript" src="/namuwiki/js/edit.js"></script>
 		<script type="text/javascript" src="/namuwiki/js/discuss.js"></script>
 		<script type="text/javascript" src="/namuwiki/js/theseed.js"></script>
+		<script src="/js/katex.min.js" integrity="sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O" crossorigin="anonymous"></script>
+		<script src="/js/auto-render.min.js" integrity="sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF" crossorigin="anonymous"></script>
+		<script>
+			document.addEventListener("DOMContentLoaded", function() {
+				renderMathInElement(document.body, {
+					delimiters: [
+						{left: "$$", right: "$$", display: false}
+					]
+				});
+			});
+		</script>
 		<script type="text/javascript">
 			$(document).ready(function(){
 <?php
 			if($settings['docVersion']!='180326'){ ?>
-				$("#userDiscussAlert").html('현재 <?=$settings['docVersion']?>버전 덤프를 사용중이며, 로딩이 불안정할 수 있습니다. &nbsp; &nbsp; =><a href="./?settings=1&autover=180326">안정 버전 사용</a>');
+				$("#userDiscussAlert").html('현재 <?=$settings['docVersion']?>버전 덤프를 사용중이며, 로딩이 불안정할 수 있습니다. &nbsp; &nbsp; =><a href="/w/?settings=1&autover=180326">안정 버전 사용</a>');
 <?php		} else { ?>
 				$("#userDiscussAlert").html('궁금하신 점이 있으신가요? <a href="/request/">기술지원</a>을 요청해보세요.');
 <?php		} ?>
@@ -363,7 +372,13 @@
 			});
 		</script>
 <?php	} ?>
-		<!-- 광고영역 -->
+		<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+		<script>
+		     (adsbygoogle = window.adsbygoogle || []).push({
+		          google_ad_client: "ca-pub-8464541176962266",
+		          enable_page_level_ads: true
+		     });
+		</script>
 	</head>
 	<body class="senkawa hide-sidebar fixed-size fixed-1300">
 		<script type="text/javascript" src="/namuwiki/js/layout.js?e4665c6b"></script>
@@ -431,7 +446,7 @@
 					<li class="nav-item dropdown user-menu-parent">
 						<a class="nav-link dropdown-toggle user-menu" href="#" title="Member Menu" data-toggle="dropdown" aria-haspopup="true">
 <?php					if($_SESSION['name']!=""){
-							if($_SESSION['email']==""){ $conn = mysqli_connect("localhost", "username", "userpass", "dbname"); mysqli_set_charset($conn,"utf8"); $sql = "SELECT * FROM wiki_user WHERE name = '$_SESSION[name]' LIMIT 1"; $res = mysqli_query($conn, $sql); $asr = mysqli_fetch_array($res); $_SESSION['email'] = $asr['email']; } $gravatar = md5(trim($_SESSION['email'])); ?>
+							if($_SESSION['email']==""){ $sql = "SELECT * FROM wiki_user WHERE name = '$_SESSION[name]' LIMIT 1"; $res = mysqli_query($wiki_db, $sql); $asr = mysqli_fetch_array($res); $_SESSION['email'] = $asr['email']; } $gravatar = md5(trim($_SESSION['email'])); ?>
 							<img class="user-img" src="//secure.gravatar.com/avatar/<?=$gravatar?>?d=retro">
 <?php					} else { ?>
 							<span class="icon ion-person"></span>
@@ -493,24 +508,31 @@
 	if($namespace==""){
 		$namespace = 0;
 	}
+	$tPost = $_POST;
+	$_POST = array('namespace'=>$namespace, 'title'=>$w, 'ip'=>$_SERVER['REMOTE_ADDR'], 'option'=>'original');
+	if($settings['docVersion']=='180925'&&$alpha){
+		if($namespace=='12'){
+			$namespace = '11';
+		} else if($namespace=='13'){
+			$namespace = '6';
+		}
+		$_POST = array('namespace'=>$namespace, 'title'=>$w, 'divide'=>'1', 'ip'=>$_SERVER['REMOTE_ADDR'], 'option'=>'original');
+		$namespace = 0;
+	}
 	
-	$data = array('namespace'=>$namespace, 'title'=>$w, 'token'=><<hidden>>);
-	$cURLs = 'http://api.thewiki.ga/document.php?hash='.<<hidden>>;
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $cURLs);
-	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-	curl_setopt($ch, CURLOPT_POST, 1);
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-	$api_result = json_decode(curl_exec($ch));
-	curl_close($ch);
+	define('MODEINCLUDE', true);
+	if($_GET['w']!='!MyPage'){
+		include $_SERVER['DOCUMENT_ROOT'].'/API.php';
+	} else {
+		$api_result->status = 'success';
+	}
+	$_POST = $tPost;
 	
 	if($api_result->status!='success'){
 		if($api_result->reason=='main db error'){
-			die('<script> alert("메인 DB 서버에 접속할 수 없습니다.\\n주요 기능이 동작하지 않습니다."); </script>');
+			die('<h2>메인 DB 서버에 접속할 수 없습니다.<br>주요 기능이 동작하지 않습니다.</h2>');
 		} else if($api_result->reason=='please check document title'){
-			die('<script> alert("누락된 정보가 있습니다."); </script>');
+			die('<h2>누락된 정보가 있습니다."</h2>');
 		} else if($api_result->reason=='forbidden'){ ?>
 				<h1 class="title">
 					<a href="#" data-npjax="true"><span itemprop="name"><?=$_GET['w']?></span></a>
@@ -521,9 +543,7 @@
 					<a href="#">The Wiki</a>에서 읽기 보호가 설정된 문서입니다.
 					</div>
 				</div>
-				<footer>
-					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p>
-				</footer>
+				<?=$THEWIKI_FOOTER?>
 			</article>
 		</div>
 	</body>
@@ -531,8 +551,10 @@
 <?php		die();
 		} else if($api_result->reason=='empty document'){
 			// ok
+		} else if($api_result->reason=='mongoDB server error'){
+			die('<h2>mongoDB 서버에 접속할 수 없습니다.<br>설정이 초기화됩니다.</h2><meta http-equiv="Refresh" content="3;url=/settings">');
 		} else {
-			die('<script> alert("API에 문제가 발생했습니다."); </script>');
+			die('<h2>API에 문제가 발생했습니다.</h2>');
 		}
 	}
 	
@@ -568,11 +590,11 @@
 	if(count(explode("내문서:", $w))>1){
 		$get_admin = explode("내문서:", addslashes($w));
 		$get_admin_job = "SELECT job FROM wiki_admin_list WHERE user = '$get_admin[1]' AND end_date > '$date' LIMIT 1";
-		$get_admin_job_res = mysqli_query($thewiki, $get_admin_job);
+		$get_admin_job_res = mysqli_query($wiki_db, $get_admin_job);
 		$get_admin_job_arr = mysqlI_fetch_array($get_admin_job_res);
 		
 		$get_admin_name = "SELECT name FROM wiki_admin_job WHERE job = '$get_admin_job_arr[job]' LIMIT 1";
-		$get_admin_name_res = mysqli_query($thewiki, $get_admin_name);
+		$get_admin_name_res = mysqli_query($wiki_db, $get_admin_name);
 		$get_admin = mysqlI_fetch_array($get_admin_name_res);
 	}
 		if($w!="!MyPage"){
@@ -589,7 +611,9 @@
 			<?php } else { ?>
 				<div class="wiki-article-menu">
 					<div class="btn-group" role="group">
+<?php				if($contribution!='기여자 정보가 없습니다'){ ?>
 						<a class="btn btn-secondary" href="#bottom" onclick="alert('<?=$contribution?>'); return false;" role="button">기여자 내역</a>
+<?php				} ?>
 						<a class="btn btn-secondary" itemprop="url" href="/backlink/<?=str_replace("%2F", "/", rawurlencode($_GET['w']))?>" role="button">역링크</a>
 						<a class="btn btn-secondary" itemprop="url" href="/history/<?=str_replace("%2F", "/", rawurlencode($_GET['w']))?>" role="button">수정 내역</a>
 						<a class="btn btn-secondary" itemprop="url" href="/edit/<?=str_replace("%2F", "/", rawurlencode($_GET['w']))?>" role="button">편집</a>
@@ -626,7 +650,8 @@
 								<div class="form-group" id="documentVersion">
 									<label class="control-label">덤프 버전</label>
 									<select class="form-control setting-item" name="docVersion">
-										<option value="180326">20180326 (* 권장)</option>
+										<option value="180925_alphawiki" <?php if($settings['docVersion']=="180925"){ echo 'selected'; } ?>>20180925_alphawiki</option>
+										<option value="180326" <?php if($settings['docVersion']=="180326"){ echo 'selected'; } ?>>20180326 (* 권장)</option>
 										<option value="170327" <?php if($settings['docVersion']=="170327"){ echo 'selected'; } ?>>20170327</option>
 										<option value="161031" <?php if($settings['docVersion']=="161031"){ echo 'selected'; } ?>>20161031</option>
 										<option value="160829" <?php if($settings['docVersion']=="160829"){ echo 'selected'; } ?>>20160829</option>
@@ -699,17 +724,15 @@
 <?php			} ?>
 					</div>
 				</div>
-			
-				<footer>
-					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p>
-				</footer>
+				
+				<?=$THEWIKI_FOOTER?>
 			</article>
 		</div>
 	</body>
 </html>
 <?php	die(); }
 	if(defined("isdeleted")){
-		die('<hr>이 문서는 삭제되었습니다.<hr><a href="/edit/'.str_replace("%2F", "/", rawurlencode($_GET['w'])).'" target="_top">새로운 문서 만들기</a> &nbsp; | &nbsp; <a id="addque">나무위키에서 가져오기</a></div></div><footer><p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p></footer></article></div></body></html>');
+		die('<hr>이 문서는 삭제되었습니다.<hr><a href="/edit/'.str_replace("%2F", "/", rawurlencode($_GET['w'])).'" target="_top">새로운 문서 만들기</a> &nbsp; | &nbsp; <a id="addque">나무위키에서 가져오기</a></div></div>'.$THEWIKI_FOOTER.'</article></div></body></html>');
 	}
 	
 	ob_flush(); flush();
@@ -725,14 +748,14 @@
 		// 분류 문서
 		if($namespace=="2"&&$settings['docVersion']==$settingsref['docVersion']){
 			$sql = "SELECT * FROM category WHERE target = '$w'";
-			$res = mysqli_query($conn, $sql);
+			$res = mysqli_query($config_db, $sql);
 			$arr_category = mysqli_fetch_array($res);
 			
 			$root_directory = explode(",", $arr_category['root']);
 			$list_document = explode(",", $arr_category['title']);
 			
 			$sql = "SELECT * FROM category WHERE target != '$w' AND root LIKE '%".$w."%'";
-			$res = mysqli_query($conn, $sql);
+			$res = mysqli_query($config_db, $sql);
 			while($arr_root=mysqli_fetch_array($res)){
 				$x++;
 				$low_directory[$x] = $arr_root['target'];
@@ -780,131 +803,27 @@
 = 분류 설명 =
 ".$arr[text];
 		}
-		require_once("../namumark.php");
 		
 		// noredirect 지원
 		if($noredirect){
 			define('noredirect', true);
 		}
 		
-		// 하위문서 링크
-		$arr['text'] = str_replace("[[/", "[[".$_GET['w']."/", $arr['text']);
+		require_once($_SERVER['DOCUMENT_ROOT']."/namumark.php");
 		
-		// #!wiki style 문법 우회 적용
-		$arr['text'] = str_replace("}}}", "_(HTMLE)_", $arr['text']);
-		$htmlstart = explode('{{{#!wiki style="', $arr['text']);
-		for($x=1;$x<count($htmlstart);$x++){
-			$style = reset(explode('"', $htmlstart[$x]));
-			$arr['text'] = str_replace('{{{#!wiki style="'.$style.'"', '{{{#!html <div style="'.$style.'">}}}', $arr['text']);
-			
-			$loop = explode("_(HTMLE)_", next(explode('{{{#!html <div style="'.$style.'">}}}', $arr['text'])));
-			$check = true;
-			$z = 0;
-			while($check){
-				if(count(explode("{{{", $loop[$z]))>1){
-					$z = $z + count(explode("{{{", $loop[$z])) - 1;
-				} else {
-					$arr['text'] = str_replace($loop[$z-1]."_(HTMLE)_".$loop[$z]."_(HTMLE)_", $loop[$z-1]."_(HTMLE)_".$loop[$z]."{{{#!html </div>}}}", $arr['text']);
-					$check = false;
-				}
-				if($z>count($loop)){
-					$check = false;
-				}
-			}
-		}
-		$arr['text'] = str_replace("</div>}}}_(HTMLE)_", "</div>}}}{{{#!html </div>}}}", $arr['text']);
+		// themark 통합
+		define('USETHEMARK', true);
+		define('THEMARK_IMGLOAD', $settings['imgAutoLoad']);
+		include $_SERVER['DOCUMENT_ROOT'].'/themark.php';
 		
-		// [[XXX|[[XXX]]]] 문법 우회 적용
-		$arr['text'] = str_replace("| [[파일:", "|[[파일:", $arr['text']);
-		$filestart = explode('|[[파일:', $arr['text']);
-		for($x=0;$x<count($filestart)-1;$x++){
-			$include = end(explode("[[", $filestart[$x]));
-			$filelink = "파일:".reset(explode("]]", $filestart[$x+1]));
-			
-			if(substr($include, 0, 7)=="http://"||substr($include, 0, 8)=="https://"||substr($include, 0, 2)=="//"){
-				$change = '{{{#!html <a href="'.$include.'" target="_blank">}}}[['.$filelink.']]{{{#!html </a>}}}';
-			} else {
-				$change = '{{{#!html <a href="/w/'.$include.'" target="_self">}}}[['.$filelink.']]{{{#!html </a>}}}';
-			}
-			$arr['text'] = str_replace("[[".$include."|[[".$filelink."]]]]", $change, $arr['text']);
-		}
-		
-		// 작업마무리
-		$arr['text'] = str_replace("_(HTMLS)_", "{{{", $arr['text']);
-		$arr['text'] = str_replace("_(HTMLE)_", "}}}", $arr['text']);
-		$arr['text'] = str_replace("_(HTMLSTART)_", "{{{#!html", $arr['text']);
-		$arr['text'] = str_replace("_(NAMUMIRRORHTMLSTART)_", "{{{#!html <div style=", $arr['text']);
-		$arr['text'] = str_replace("_(NAMUMIRRORHTMLEND)_", "}}}", $arr['text']);
-		$arr['text'] = str_replace("_(NAMUMIRRORDAASH)_", "'", $arr['text']);
-		$arr['text'] = str_replace("﻿#", "#", $arr['text']);
-		$tmparr = $arr['text'];
-		
-		// #!folding 문법 우선 적용
-		$foldingstart = explode('{{{#!folding ', $arr['text']);
-		for($z=1;$z<count($foldingstart);$z++){
-			$foldingcheck = true;
-			$foldopentemp = reset(explode("
-", $foldingstart[$z]));
-			if(count(explode("#!end}}}", $foldingstart[$z]))>1){
-				$foldingtemp = str_replace("#!end}}}", "_(FOLDINGEND)_", $foldingstart[$z]);
-				$foldingdatatemp = next(explode($foldopentemp, reset(explode("_(FOLDINGEND)_", $foldingtemp))));
-				$md5 = md5(rand(1,10).$foldingdatatemp);
-				$foldopen[$md5] = $foldopentemp;
-				$foldingdata[$md5] = $foldingdatatemp;
-				$arr['text'] = str_replace("{{{#!folding ".$foldopentemp.$foldingdatatemp."#!end}}}", "_(FOLDINGSTART)_".$md5."_(FOLDINGSTART2)_ _(FOLDINGDATA)_".$md5."_(FOLDINGDATA2)_ _(FOLDINGEND)_", $arr['text']);
-			}
-		}
-		
-		// [datetime] [PageCount] 지원
-		$arr['text'] = str_replace("[datetime]", date("Y-m-d H:i:s"), $arr['text']);
-		
-		// MySQLWikiPage와는 달리 PlainWikiPage의 첫 번째 인수로 위키텍스트를 받습니다.
-		$wPage = new PlainWikiPage($arr['text']);
-		
-		// NamuMark 생성자는 WikiPage를 인수로 받습니다.
-		$wEngine = new NamuMark($wPage);
-		
-		// 위키링크의 앞에 붙을 경로를 prefix에 넣습니다.
-		$wEngine->prefix = "/w";
-		if($namespace!='3'&&$namespace!='11'&&$settings['imgAutoLoad']==0){ $wEngine->imageAsLink = true; }
-		$wPrint = $wEngine->toHtml();
-		
-		// #!folding
-		if($foldingcheck){
-			$wPrint = str_replace('_(FOLDINGEND)_', '</div></dd></dl>', $wPrint);
-			
-			$getmd5 = explode("_(FOLDINGDATA)_", $wPrint);
-			for($xz=1;$xz<count($getmd5);$xz++){
-				$mymd5 = reset(explode("_(FOLDINGDATA2)_", $getmd5[$xz]));
-				$wPrint = str_replace('_(FOLDINGSTART)_'.$mymd5.'_(FOLDINGSTART2)_', '<dl class="wiki-folding"><dt><center>'.$foldopen[$mymd5].'</center></dt><dd style="display: none;"><div class="wiki-table-wrap">', $wPrint);
-				
-				$fPage = new PlainWikiPage($foldingdata[$mymd5]);
-				$fEngine = new NamuMark($fPage);
-				$fEngine->prefix = "/w";
-				$fPrint = $fEngine->toHtml();
-				
-				$wPrint = str_replace('<div class="wiki-table-wrap"> _(FOLDINGDATA)_'.$mymd5.'_(FOLDINGDATA2)_ </div>', '<div class="wiki-table-wrap"> '.$fPrint.' </div>', $wPrint);
-			}
-		}
-		
-		foreach($wPrint2 as $key=>$value){
-			$find = "_(SCRIPTBYPASS_".$key.")_";
-			$wPrint = str_replace($find, $value, $wPrint);
-		}
-		
-		foreach($override as $key => $val){
-			$wPrint = str_replace('@'.$key.'@', $val, $wPrint);
-		}
-		
-		$wPrint = str_replace('<a href="/w/'.str_replace(array('%3A', '%2F', '%23', '%28', '%29'), array(':', '/', '#', '(', ')'), rawurlencode($_GET['w'])).'"', '<a style="font-weight:bold;" href="/w/'.str_replace(array('%3A', '%2F', '%23', '%28', '%29'), array(':', '/', '#', '(', ')'), rawurlencode($_GET['w'])).'"', $wPrint);
-		echo str_replace('<br> <br>', '', $wPrint);
+		echo themark($arr['text']);
 	} else {
 		if($namespace=="11"){
 			$sql = "SELECT * FROM file WHERE name = '$_GET[w]'";
-			$res = mysqli_query($conn, $sql);
+			$res = mysqli_query($config_db, $sql);
 			$cnt = mysqli_num_rows($res);
 			if($cnt>0){
-				require_once("namumark.php");
+				require_once($_SERVER['DOCUMENT_ROOT']."/namumark.php");
 				$arr['text'] = "[[".$_GET['w']."]]";
 				// MySQLWikiPage와는 달리 PlainWikiPage의 첫 번째 인수로 위키텍스트를 받습니다.
 				$wPage = new PlainWikiPage($arr['text']);
@@ -917,11 +836,22 @@
 				$wPrint = $wEngine->toHtml();
 				echo $wPrint;
 			} else { ?>
-				업로드된 이미지가 아닙니다.<br><a href='/Upload.php' target='_top'>이미지 업로드</a></div></div><footer><p><img alt="크리에이티브 커먼즈 라이선스" style="border-width: 0;" src="/namuwiki/cc-by-nc-sa-2.0-88x31.png"></p><p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p></footer></article></div></body></html>
+				업로드된 이미지가 아닙니다.<br><a href='/Upload.php' target='_top'>이미지 업로드</a></div></div><?=$THEWIKI_FOOTER?></article></div></body></html>
 <?php			die();
 			}
 		}
-?><!-- 구글 검색창 -->
+?><script>
+  (function() {
+    var cx = 'partner-pub-8464541176962266:7351409120';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+</script>
+<gcse:searchbox-only></gcse:searchbox-only>
 <?php
 		$cURLs = "http://ac.search.naver.com/nx/ac?_callback=result&q=".rawurlencode($_GET['w'])."&q_enc=UTF-8&st=100&frm=nv&r_format=json&r_enc=UTF-8&r_unicode=0&t_koreng=1&ans=1";
 		$ch = curl_init();
@@ -948,17 +878,13 @@
 		if(count($result)>1){
 			echo '<hr><br>이런 문서들이 있을 수 있습니다. 확인해보세요!<br>'.$title_list;
 		}
-		die('</div></div><footer><p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p></footer></article></div></body></html>');
+		die('</div></div>'.$THEWIKI_FOOTER.'</article></div></body></html>');
 	}
 ?>
 					</div>
 				</div>
 			
-				<footer>
-					<p><img alt="크리에이티브 커먼즈 라이선스" style="border-width: 0;" src="/namuwiki/cc-by-nc-sa-2.0-88x31.png"></p>
-					<p>이 저작물은 <a href="https://namu.wiki/" target="_blank">나무위키</a>에서 저장되고 <a href="/" target="_blank">The Wiki</a>에서 수정된 것으로, <a rel="license" target="_blank" href="//creativecommons.org/licenses/by-nc-sa/2.0/kr/">CC BY-NC-SA 2.0 KR</a> 에 따라 이용할 수 있습니다. (단, 라이선스가 명시된 일부 문서 및 삽화 제외)<br/>기여하신 문서의 저작권은 각 기여자에게 있으며, 각 기여자는 기여하신 부분의 저작권을 갖습니다.</p>
-					<p>Powered by <a href="https://github.com/koreapyj/php-namumark" target="_blank">namumark</a> | <a href="/LICENSE" target="_blank">LICENSE</a> | <a href="//github.com/dercsyong/UnofficialNamuMirror" target="_blank">Source</a></p>
-				</footer>
+				<?=$THEWIKI_FOOTER?>
 			</article>
 		</div>
 	</body>
